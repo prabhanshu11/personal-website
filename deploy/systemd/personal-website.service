@@ -1,0 +1,32 @@
+[Unit]
+Description=Prabhanshu Personal Website - FastHTML Application
+After=network.target
+
+[Service]
+Type=simple
+User=prabhanshu
+Group=www-data
+WorkingDirectory=/var/www/prabhanshu.space
+Environment="PATH=/home/prabhanshu/.local/bin:/home/prabhanshu/.cargo/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PORT=8000"
+Environment="DEBUG=False"
+Environment="HOST=0.0.0.0"
+
+# Use uv to run the application
+ExecStart=/home/prabhanshu/.local/bin/uv run python -m src.app
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=prabhanshu-website
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

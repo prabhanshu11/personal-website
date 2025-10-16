@@ -1,73 +1,201 @@
-# Personal Website
+# Personal Website - prabhanshu.space
 
-A minimal personal profile site using Python and FastHTML. Currently it serves a simple “Hello, World” page and is intended as a foundation to grow into a full portfolio/profile.
+A modern personal website built with Python and FastHTML, deployed on a VPS with nginx, SSL, and systemd.
 
-## Quick Start (local)
+## 🌐 Live Site
 
-Recommended: use `uv` for Python and fish shell.
+**Visit:** [https://prabhanshu.space](https://prabhanshu.space)
 
-- Ensure uv is installed: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- Create a project env and add the web dependency:
-  - If the package is `python-fasthtml`: `uv add python-fasthtml`
-  - If it’s published as `fasthtml`: `uv add fasthtml`
-  - Tip: run `uv search fasthtml` to confirm the exact package name.
-- Run the app: `uv run python app.py`
-- Open: http://127.0.0.1:8000/
+## 🛠️ Tech Stack
 
-Fish venv fallback (if not using uv):
+- **Framework:** FastHTML (Python)
+- **Server:** Uvicorn (ASGI)
+- **Reverse Proxy:** Nginx
+- **SSL:** Let's Encrypt (Certbot)
+- **Package Manager:** UV
+- **Process Manager:** Systemd
+- **Hosting:** Hostinger VPS (Debian 13)
+- **DNS:** Namecheap
 
-- `python -m venv .venv && source .venv/bin/activate.fish`
-- `pip install python-fasthtml` (or `pip install fasthtml`)
-- `python app.py`
+## 📁 Project Structure
 
-## Project Status
+```
+personal-website/
+├── src/
+│   ├── __init__.py
+│   └── app.py              # Main FastHTML application
+├── deploy/
+│   ├── nginx.conf          # Nginx configuration
+│   ├── prabhanshu-website.service  # Systemd service
+│   ├── setup-vps.sh        # One-time VPS setup script
+│   └── deploy.sh           # Deployment script
+├── tests/                  # Test files (future)
+├── pyproject.toml          # UV/Python project config
+├── .gitignore
+└── README.md
+```
 
-- Routes: only `/` returning a static heading.
-- No tests yet. Add `pytest` as the app grows.
+## 🚀 Local Development
 
-## Next Steps
+### Prerequisites
 
-- Choose hosting:
-  - Dynamic Python app: Render, Railway, Fly.io, or similar.
-  - Pure static profile (no Python): GitHub Pages (repo `prabhanshu11.github.io`).
-- Add a proper project layout (`src/`), templates/content, and basic tests.
-- Set up dependency management with `uv` (`pyproject.toml`, `uv.lock`).
+- Python 3.12+
+- UV package manager
 
-## Deploy Options
+### Setup
 
-GitHub Pages (static only):
+```bash
+# Install UV (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-- If you want a static site, move content to static HTML/CSS/JS and push to a repo named `prabhanshu11.github.io`. Pages enables automatic HTTPS.
+# Clone repository
+git clone https://github.com/prabhanshu11/personal-website.git
+cd personal-website
 
-Render/Railway/Fly.io (runs Python server):
+# Install dependencies
+uv sync
 
-- Make sure dependencies are declared with `uv`.
-- Typical start commands:
-  - Using the built-in server: `uv run python app.py` (the `serve()` helper should bind to `$PORT`).
-  - Or with Uvicorn (if needed): `uv run uvicorn app:app --host 0.0.0.0 --port $PORT`.
-- Connect your GitHub repo, set the start command, and deploy. These providers auto‑provision TLS when you add a custom domain.
+# Run development server
+uv run python -m src.app
 
-## SSL/HTTPS – How To Check
+# Or with debug mode
+DEBUG=True uv run python -m src.app
+```
 
-After deploying to a domain (example: `yourdomain.com`):
+Visit: http://localhost:8000
 
-- Browser: visit `https://yourdomain.com` and check the lock icon; view the certificate details.
-- CLI (headers): `curl -I https://yourdomain.com` (expect `HTTP/2 200` or a 3xx to your site).
-- CLI (certificate):
-  - `openssl s_client -connect yourdomain.com:443 -servername yourdomain.com -showcerts </dev/null | openssl x509 -noout -issuer -subject -dates`
-- Online scanner: SSL Labs — https://www.ssllabs.com/ssltest/analyze.html?d=yourdomain.com
+## 🌐 Deployment
 
-Notes for GitHub Pages + custom domain:
+### Initial VPS Setup (One-time)
 
-- Add your domain in repo Settings → Pages.
-- Set DNS: `CNAME` to `prabhanshu11.github.io` (or `ALIAS/ANAME/A` per docs).
-- Check “Enforce HTTPS” — it appears once the cert is ready (can take minutes to a few hours).
+```bash
+# SSH into VPS
+ssh prabhanshu @72.60.218.33
 
-## GitHub Remote & Push
+# Run setup script
+bash setup-vps.sh
+```
 
-- Create a repo on GitHub (e.g., `personal-website`) under `prabhanshu11` and share the URL.
-- Then run:
-  - `git remote add origin <YOUR_URL>`
-  - `git push -u origin main`
+This will:
+- Install all required software (Python, nginx, certbot, UV)
+- Clone the repository
+- Configure nginx reverse proxy
+- Set up systemd service
+- Obtain SSL certificate from Let's Encrypt
+- Start the application
 
-If you want this to be a GitHub Pages user site instead, create `prabhanshu11.github.io` and we can convert this to a static site.
+### Deploy Updates
+
+**From local machine:**
+
+```bash
+# Make changes to code
+git add .
+git commit -m "Your commit message"
+git push origin main
+```
+
+**On VPS:**
+
+```bash
+# SSH into VPS
+ssh prabhanshu @72.60.218.33
+
+# Run deploy script
+deploy
+
+# Or manually:
+cd /var/www/prabhanshu.space
+./deploy/deploy.sh
+```
+
+## 🔧 Useful Commands
+
+### On VPS
+
+```bash
+# Check application status
+sudo systemctl status prabhanshu-website
+
+# View application logs
+sudo journalctl -u prabhanshu-website -f
+
+# Restart application
+sudo systemctl restart prabhanshu-website
+
+# Check nginx status
+sudo systemctl status nginx
+
+# Test nginx configuration
+sudo nginx -t
+
+# Restart nginx
+sudo systemctl restart nginx
+
+# Check SSL certificate
+sudo certbot certificates
+
+# Renew SSL certificate (manual)
+sudo certbot renew
+```
+
+## 🔍 Monitoring
+
+- **Application Health:** https://prabhanshu.space/health
+- **Nginx Access Logs:** `/var/log/nginx/prabhanshu.space.access.log`
+- **Nginx Error Logs:** `/var/log/nginx/prabhanshu.space.error.log`
+- **Application Logs:** `sudo journalctl -u prabhanshu-website -f`
+
+## 🔒 SSL/HTTPS
+
+SSL certificate is automatically managed by Let's Encrypt and renews every 60 days.
+
+**Test SSL:**
+- Browser: Visit https://prabhanshu.space (check padlock icon)
+- SSL Labs: https://www.ssllabs.com/ssltest/analyze.html?d=prabhanshu.space
+
+## 🐛 Troubleshooting
+
+### Application not starting
+
+```bash
+# Check logs
+sudo journalctl -u prabhanshu-website -n 50
+
+# Check if port 8000 is in use
+sudo lsof -i :8000
+
+# Restart service
+sudo systemctl restart prabhanshu-website
+```
+
+### 502 Bad Gateway
+
+```bash
+# Check if application is running
+sudo systemctl status prabhanshu-website
+
+# Check nginx logs
+sudo tail -f /var/log/nginx/prabhanshu.space.error.log
+```
+
+### DNS not resolving
+
+```bash
+# Check DNS from local machine
+dig prabhanshu.space
+dig www.prabhanshu.space
+
+# Should return: 72.60.218.33
+```
+
+## 📝 License
+
+MIT License - feel free to use this as a template for your own website!
+
+## 👤 Author
+
+**Prabhanshu**
+- Website: [prabhanshu.space](https://prabhanshu.space)
+- GitHub: [ @prabhanshu11](https://github.com/prabhanshu11)
+- Email: hello @prabhanshu.space

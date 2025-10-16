@@ -1,10 +1,5 @@
-from fasthtml.common import FastHTML, serve
-
-app = FastHTML()
-
-@app.get("/")
-def home():
-    return "<h1>Hello, World</h1>"
+from website.app import app, HOST, PORT, DEBUG
 
 if __name__ == "__main__":
-    serve()
+    import uvicorn
+    uvicorn.run("website.app:app", host=HOST, port=PORT, reload=False)
