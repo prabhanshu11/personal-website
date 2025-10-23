@@ -39,8 +39,9 @@ fi
 echo "✅ UV installed at: $(which uv)"
 
 # Create application directory
-echo "📁 Creating application directory..."
-sudo mkdir -p /var/www/prabhanshu.space
+echo "📁 Ensuring clean application directory..."
+sudo rm -rf /var/www/prabhanshu.space/ # Remove existing directory
+sudo mkdir -p /var/www/prabhanshu.space/ # Recreate it
 sudo chown -R prabhanshu:www-data /var/www/prabhanshu.space
 sudo chmod -R 755 /var/www/prabhanshu.space
 
@@ -48,6 +49,10 @@ sudo chmod -R 755 /var/www/prabhanshu.space
 echo "📥 Cloning repository from GitHub..."
 cd /var/www/prabhanshu.space
 git clone https://github.com/prabhanshu11/personal-website.git .
+
+# Configure Nginx
+echo "🌐 Configuring Nginx..."
+sudo cp deploy/nginx/personal-website.conf /etc/nginx/sites-available/prabhanshu.space
 
 # Initialize UV and install dependencies
 echo "📦 Installing Python dependencies..."
