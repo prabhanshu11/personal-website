@@ -58,10 +58,6 @@ sudo cp deploy/nginx/personal-website.conf /etc/nginx/sites-available/prabhanshu
 echo "📦 Installing Python dependencies..."
 uv sync
 
-# Configure Nginx
-echo "🌐 Configuring Nginx..."
-sudo cp deploy/nginx.conf /etc/nginx/sites-available/prabhanshu.space
-
 # Enable site
 sudo ln -sf /etc/nginx/sites-available/prabhanshu.space /etc/nginx/sites-enabled/
 
@@ -78,7 +74,7 @@ sudo systemctl restart nginx
 
 # Configure systemd service
 echo "⚙️  Configuring systemd service..."
-sudo cp deploy/prabhanshu-website.service /etc/systemd/system/
+sudo cp deploy/systemd/personal-website.service /etc/systemd/system/prabhanshu-website.service
 
 # Reload systemd
 sudo systemctl daemon-reload
@@ -107,11 +103,11 @@ echo "🔍 Testing SSL certificate renewal..."
 sudo certbot renew --dry-run
 
 # Make deploy script executable
-chmod +x /var/www/prabhanshu.space/deploy/deploy.sh
+chmod +x /var/www/prabhanshu.space/deploy/run.sh
 
 # Create deploy alias
 if ! grep -q "alias deploy" ~/.bashrc; then
-    echo "alias deploy='cd /var/www/prabhanshu.space && ./deploy/deploy.sh'" >> ~/.bashrc
+    echo "alias deploy='cd /var/www/prabhanshu.space && ./deploy/run.sh'" >> ~/.bashrc
 fi
 
 echo ""
@@ -125,7 +121,7 @@ echo "  - Application directory: /var/www/prabhanshu.space"
 echo "  - Nginx config: /etc/nginx/sites-available/prabhanshu.space"
 echo "  - Systemd service: /etc/systemd/system/prabhanshu-website.service"
 echo "  - Logs: sudo journalctl -u prabhanshu-website -f"
-echo "  - Deploy command: deploy (or ./deploy/deploy.sh)"
+echo "  - Deploy command: deploy (or ./deploy/run.sh)"
 
 echo ""
 
