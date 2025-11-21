@@ -13,7 +13,9 @@ GLOBAL_STYLES = Style('''
     * { 
         margin: 0; 
         padding: 0; 
-        box-sizing: border-box; 
+        box-sizing: border-box;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
     }
     
     body {
@@ -73,6 +75,7 @@ GLOBAL_STYLES = Style('''
         margin-bottom: 1rem;
         text-align: justify;
         color: #555;
+        hyphens: auto;
     }
     
     ul {
@@ -154,7 +157,8 @@ def create_layout(title: str, *content):
                 *content,
                 cls="container"
             )
-        )
+        ),
+        lang="en"
     )
 
 
