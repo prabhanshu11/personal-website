@@ -96,7 +96,7 @@ echo "🔒 Setting up SSL certificate..."
 echo "⚠️  Make sure DNS is pointing to this server before continuing!"
 read -p "Press Enter to continue with SSL setup, or Ctrl+C to cancel..."
 
-sudo certbot --nginx -d prabhanshu.space -d www.prabhanshu.space --non-interactive --agree-tos --email hello @prabhanshu.space --redirect
+sudo certbot --nginx -d prabhanshu.space -d www.prabhanshu.space --non-interactive --agree-tos --email hello@prabhanshu.space --redirect
 
 # Test SSL renewal
 echo "🔍 Testing SSL certificate renewal..."

@@ -13,7 +13,7 @@ Environment="DEBUG=False"
 Environment="HOST=0.0.0.0"
 
 # Use uv to run the application
-ExecStart=/home/prabhanshu/.local/bin/uv run python -m src.app
+ExecStart=/home/prabhanshu/.local/bin/uv run python -m website.app
 
 # Restart policy
 Restart=always

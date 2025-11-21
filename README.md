@@ -21,14 +21,14 @@ A modern personal website built with Python and FastHTML, deployed on a VPS with
 
 ```
 personal-website/
-├── src/
+├── website/
 │   ├── __init__.py
 │   └── app.py              # Main FastHTML application
 ├── deploy/
-│   ├── nginx.conf          # Nginx configuration
-│   ├── prabhanshu-website.service  # Systemd service
+│   ├── nginx/              # Nginx configuration
+│   ├── systemd/            # Systemd service
 │   ├── setup-vps.sh        # One-time VPS setup script
-│   └── deploy.sh           # Deployment script
+│   └── run.sh              # Deployment script
 ├── tests/                  # Test files (future)
 ├── pyproject.toml          # UV/Python project config
 ├── .gitignore
