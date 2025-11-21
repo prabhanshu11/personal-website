@@ -82,7 +82,7 @@ sudo systemctl daemon-reload
 # Enable and start service
 echo "🚀 Starting application service..."
 sudo systemctl enable prabhanshu-website
-sudo systemctl start prabhanshu-website
+sudo systemctl restart prabhanshu-website
 
 # Check service status
 echo "✅ Checking service status..."
