@@ -165,7 +165,7 @@ def home():
         "Home",
         Header(
             H1("Prabhanshu"),
-            P("Software Developer | Python Enthusiast | Tech Explorer", 
+            P("Data Scientist & AI Engineer | Building robust, intelligent applications", 
               cls="subtitle")
         ),
         
@@ -173,14 +173,13 @@ def home():
         Section(
             H2(Span("👋", cls="emoji"), "Introduction"),
             P(
-                "Welcome to my personal website! I'm Prabhanshu, "
-                "a developer passionate about building web applications "
-                "and exploring modern technologies."
+                "I am a Data Scientist and Engineer dedicated to building robust, scalable systems. "
+                "With a background in processing financial and industrial data at scale, I focus on "
+                "creating applications that are not just experimental, but production-ready."
             ),
             P(
-                "This site is built with FastHTML, a modern Python framework "
-                "that makes web development simple and powerful. It's hosted "
-                "on my own VPS with nginx, showcasing a complete production deployment."
+                "My expertise lies in architecting ", Strong("RAG pipelines"), ", optimizing data flows, "
+                "and developing native ", Strong("Databricks Apps"), " that leverage your data infrastructure effectively."
             )
         ),
         
@@ -188,23 +187,23 @@ def home():
         Section(
             H2(Span("💼", cls="emoji"), "About Me"),
             P(
-                "I'm currently exploring web development with Python, "
-                "focusing on creating fast, responsive, and scalable applications. "
-                "My interests include:"
+                "I bridge the gap between data science and software engineering. "
+                "My experience ranges from handling critical financial datasets to building "
+                "advanced NLP models for safety analysis. I am passionate about:"
             ),
             Ul(
-                Li("Web Development with Python & FastHTML"),
-                Li("Cloud Infrastructure & DevOps"),
-                Li("Modern Web Technologies & Best Practices"),
-                Li("Open Source Contribution"),
-                Li("Server Management & Linux Systems")
+                Li("Building Production-Grade AI Applications"),
+                Li("Databricks App Development & Optimization"),
+                Li("Large Scale Data Processing (PySpark, Azure)"),
+                Li("Natural Language Processing & RAG"),
+                Li("Robust ETL Pipelines")
             )
         ),
         
         # Skills Section
         Section(
             H2(Span("🛠️", cls="emoji"), "Skills & Technologies"),
-            P("Python • FastHTML • Uvicorn • Web Development • Git • Linux • Nginx • Docker • UV Package Manager")
+            P("Python • RAG Pipelines • LLM Integration • Data Engineering • PySpark • Azure • Databricks Apps • FastHTML • Docker")
         ),
         
         # Projects Section
@@ -270,22 +269,24 @@ def about():
         Section(
             H2(Span("🚀", cls="emoji"), "My Journey"),
             P(
-                "I'm a developer who believes in learning by doing. "
-                "This website itself is a testament to that philosophy - "
-                "built from scratch using modern Python web technologies."
+                "My journey began in engineering, where I developed a rigorous approach to problem-solving. "
+                "This foundation serves me well in Data Science, where precision is paramount."
             ),
             P(
-                "I chose FastHTML because it allows me to write both "
-                "backend and frontend in pure Python, without the complexity "
-                "of traditional JavaScript frameworks."
+                "At ", Strong("Bread Financials"), ", I manage complex ETL pipelines and account reconciliations, "
+                "ensuring data integrity for critical financial reports. Previously at ", Strong("TheMathCompany"), 
+                ", I built NLP frameworks to analyze safety incidents, turning unstructured text into actionable safety insights."
+            ),
+            P(
+                "I combine this deep data experience with modern web technologies to build tools that are powerful yet intuitive."
             )
         ),
         Section(
             H2(Span("💡", cls="emoji"), "Philosophy"),
             P(
-                "I believe in writing clean, maintainable code and using "
-                "the right tool for the job. I'm passionate about automation, "
-                "infrastructure as code, and creating efficient deployment pipelines."
+                "I believe in writing clean, maintainable code and using the right tool for the job. "
+                "Whether it's a complex RAG pipeline or a streamlined Databricks App, my goal is always "
+                "to deliver robust solutions that drive real business value."
             )
         ),
         Footer(
