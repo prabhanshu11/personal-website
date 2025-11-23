@@ -70,44 +70,33 @@ Visit: http://localhost:8000
 
 ```bash
 # SSH into VPS
-ssh prabhanshu @72.60.218.33
+ssh prabhanshu@72.60.218.33
 
-# Run setup script
-bash setup-vps.sh
+# Run setup script (Installs Docker & Dependencies)
+./setup-vps.sh
 ```
-
-This will:
-- Install all required software (Python, nginx, certbot, UV)
-- Clone the repository
-- Configure nginx reverse proxy
-- Set up systemd service
-- Obtain SSL certificate from Let's Encrypt
-- Start the application
 
 ### Deploy Updates
 
-**From local machine:**
+**Option 1: Automatic (Recommended)**
+Just push to the `main` branch! GitHub Actions will automatically:
+1.  SSH into the VPS.
+2.  Pull the latest code.
+3.  Rebuild the Docker container.
+4.  Restart the application.
 
-```bash
-# Make changes to code
-git add .
-git commit -m "Your commit message"
-git push origin main
-```
-
-**On VPS:**
+**Option 2: Manual**
+If you need to trigger a deploy manually:
 
 ```bash
 # SSH into VPS
-ssh prabhanshu @72.60.218.33
+ssh prabhanshu@72.60.218.33
 
-# Run deploy script
+# Run deploy command
 deploy
-
-# Or manually:
-cd /var/www/prabhanshu.space
-./deploy/deploy.sh
 ```
+
+This runs the `deploy/run.sh` script which handles the Docker build and restart process.
 
 ## 🔧 Useful Commands
 

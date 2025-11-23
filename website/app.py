@@ -133,14 +133,29 @@ GLOBAL_STYLES = Style('''
     }
 ''')
 
+# Script for Mobile Zoom Reflow
+# This forces the body width to match the visual viewport width when zooming,
+# causing text to reflow (wrap) within the zoomed view.
+ZOOM_REFLOW_SCRIPT = Script('''
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            // Only apply on mobile/touch devices where zooming is common
+            if (window.innerWidth <= 768) {
+                document.body.style.width = window.visualViewport.width + 'px';
+            }
+        });
+    }
+''')
+
 # Initialize FastHTML app
 app = FastHTML(
     hdrs=(
-        Meta(name="viewport", content="width=device-width, initial-scale=1.0"),
+        Meta(name="viewport", content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0"),
         Meta(name="description", content="Personal website of Prabhanshu - Software Developer and Python Enthusiast"),
         Meta(name="author", content="Prabhanshu"),
         Meta(charset="utf-8"),
-        GLOBAL_STYLES
+        GLOBAL_STYLES,
+        ZOOM_REFLOW_SCRIPT
     ),
 )
 

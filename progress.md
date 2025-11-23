@@ -1,72 +1,87 @@
-# Project Deployment Progress
+# Project Roadmap & Progress
 
-This document tracks the progress of deploying the `personal-website` project.
+This document tracks the evolution of `prabhanshu.space` from a static portfolio to a comprehensive "My Zone" personal dashboard.
 
-## Initial Plan
+## 📅 Development Timeline (Gantt)
 
-The deployment is structured in the following phases:
+```mermaid
+gantt
+    title My Zone Development Plan
+    dateFormat  YYYY-MM-DD
+    axisFormat  %W
+    
+    section Phase 5: Foundation
+    Auth (GitHub OAuth)       :p5_auth, 2025-11-24, 2d
+    DB Setup (SQLite/Models)  :p5_db, after p5_auth, 1d
+    My Zone Layout (UI)       :p5_ui, after p5_db, 2d
+    Mobile Responsiveness     :p5_mob, after p5_ui, 2d
 
-- **Phase 1:** Local Development Setup
-- **Phase 2:** VPS Setup and Deployment
-- **Phase 3:** Troubleshooting & Verification
-- **Phase 4:** Deployment Workflow
-
----
-
-## Current Status
-
-### ✅ Phase 1: Local Development Setup (Complete)
-
-- **Step 1.1: Create/Update Project Structure:** All project files were created and structured correctly.
-- **Step 1.2: Clean Up Local Directory:** Temporary files were removed and scripts were made executable.
-- **Step 1.3: Test Locally (AI Verified):**
-    To start and test the application locally, follow these steps:
-    1.  **Ensure dependencies are installed:**
-        ```bash
-        uv pip install -r pyproject.toml
-        ```
-    2.  **Start the Uvicorn server in the background:**
-        ```bash
-        export VIRTUAL_ENV=/home/prabhanshu/Programs/personal-website/.venv && uv run uvicorn website.app:app --host 0.0.0.0 --port 8000 > /home/prabhanshu/Programs/personal-website/logs/uvicorn_startup.log 2>&1 &
-        ```
-        *Note: The server may take a few seconds to fully start.* 
-    3.  **Verify server health:**
-        Wait for 5 seconds, then run:
-        ```bash
-        curl -f http://localhost:8000/health
-        ```
-        Expected output: `{"status":"healthy","service":"prabhanshu-website","version":"0.1.0"}`
-    4.  **Access the application in your browser:**
-        Open `http://localhost:8000` in your web browser.
-    5.  **To stop the server:**
-        Identify the process ID (PID) of the `uvicorn` server (e.g., using `ps aux | grep uvicorn`) and then use `kill <PID>`.
-
-- **Step 1.4: Commit and Push to GitHub:** All changes were successfully committed and pushed to the `main` branch of the repository.
-
-### ➡️ Phase 2: VPS Setup and Deployment (In Progress)
-
-- **Current Action:** Awaiting user to run the `setup-vps.sh` script on the target server.
+    section Phase 6: Dashboard
+    Obsidian Sync (Todo)      :p6_obs, after p5_mob, 3d
+    Life Grid & Habits        :p6_grid, after p6_obs, 3d
+    Git Stats Integration     :p6_git, after p6_grid, 2d
+    
+    section Phase 7: Integrations
+    Spotify (Don't Drop)      :p7_spot, after p6_git, 4d
+    NAS/TV Streaming          :p7_tv, after p7_spot, 5d
+    Camera/CV Backend         :p7_cam, after p7_tv, 5d
+```
 
 ---
 
-## Supporting Logs
+## ✅ Completed Phases
 
-All logs generated during the local setup and testing phase are stored in the following directory:
+### Phase 1-3: Core Infrastructure (Done)
+- **VPS Setup**: Server provisioned, Docker installed, Nginx & SSL configured.
+- **Base Website**: Portfolio content, "Data Scientist" profile, mobile text fixes.
+- **Dev Environment**: Docker-based local development workflow.
 
-- **Log Directory:** `/home/prabhanshu/Programs/logs/`
-
-Key logs include:
-- `server.log`: Captures server startup output.
-- `curl_health.log`: Output from testing the `/health` endpoint.
-- `curl_root.log`: Output from testing the `/` endpoint.
-- `curl_about.log`: Output from testing the `/about` endpoint.
+### ⚠️ Phase 4: Continuous Deployment (Needs Debugging)
+- **Step 4.1: GitHub Actions:** Workflow exists but has a history of failures (needs investigation).
+- **Step 4.2: Automation:** Currently relying on manual `deploy` command until CI/CD is fixed.
 
 ---
 
-## Principle of Good Actionable Communication
+## 🚧 Upcoming Phases
 
-For future developers (human or AI) working on this project, it is crucial to maintain clear, concise, and actionable communication within documentation and code. This principle aims to:
--   **Minimize ambiguity:** Ensure instructions are unambiguous and easy to follow.
--   **Reduce debugging time:** Provide sufficient context and expected outcomes to quickly identify and resolve issues.
--   **Streamline onboarding:** Enable new contributors to quickly understand the project's operational procedures.
--   **Prevent getting stuck:** Explicitly document common pitfalls and their solutions, ensuring that automated agents (like AI) do not get stuck on repetitive debugging cycles.
+### Phase 5: My Zone Foundation & Auth
+**Goal**: Secure access to a private area and establish the core UI structure.
+- [ ] **Authentication**: Implement GitHub OAuth to allow login via Passkey (restricted to `prabhanshu11`).
+- [ ] **Database**: Set up SQLite with FastHTML for user sessions and data persistence.
+- [ ] **Layout Engine**: Create a "Switchable" UI (Dashboard Mode <-> TV Mode).
+- [ ] **Mobile Polish**: Ensure Landing Page (Newsletter) and My Zone are fully responsive.
+
+### Phase 6: The "Quantified Self" Dashboard
+**Goal**: Visualize life metrics, habits, and tasks.
+- [ ] **Financial Planning**: Simple tracking/projection view.
+- [ ] **Daily Calendar**:
+    - "Time Wasted" vs "Time Remaining" (until 12am).
+    - **Obsidian Sync**: Parse Todo items from Syncthing-synced Vault.
+- [ ] **Long-term View**:
+    - "Life in Weeks" grid (visualize remaining weeks).
+    - **Habit Streaks**: Calories, Steps, Protein, Ice Baths, etc.
+    - **Git Stats**: Parse local `habit-tracker-git-commits` repo for push counts.
+- [ ] **Personal Logs**:
+    - Sleep/Wake times.
+    - Morning/Evening routine checklists.
+    - "Jerked Off" Tracker: Random mobile notifications/prompts for data entry.
+- [ ] **Household**: Cooking, Dishes, Laundry/Office day tracker.
+
+### Phase 7: Advanced Integrations
+**Goal**: Connect physical world and media to the digital dashboard.
+- [ ] **Spotify Integration**: Integrate `Programs/dont-drop-my-songs` for playlist management.
+- [ ] **TV Mode**:
+    - Interface for NAS media streaming.
+    - Toggle button to switch between Dashboard/TV.
+- [ ] **Computer Vision (Backend)**:
+    - Integrate TP-Link Camera feed.
+    - Develop backend service for object/activity recognition (Robotic control chain).
+
+---
+
+## 🧠 Strategic Notes (AI Thoughts)
+
+1.  **Data Sync Strategy**: For Obsidian/Syncthing, we should mount the Syncthing folder as a read-only volume into the Docker container so the app can parse the markdown files directly.
+2.  **Mobile First**: The "Jerked Off" tracker and Habit entry rely heavily on mobile usage. We need to ensure the input forms are extremely low-friction (big buttons, PWA-like feel).
+3.  **Security**: Since "My Zone" contains personal financial and habit data, the GitHub OAuth check must be strict (allowlist only your ID).
+4.  **Modular Architecture**: We should build the Dashboard widgets as separate FastHTML components so they can be easily reordered or hidden.

@@ -55,4 +55,4 @@ htmlcov/
 
 # Deployment
 deploy/*.pem
-deploy/*.key
+deploy/*.keyprogress_actual.md

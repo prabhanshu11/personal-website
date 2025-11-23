@@ -129,10 +129,12 @@ sudo certbot renew --dry-run
 # Make deploy script executable
 chmod +x /var/www/prabhanshu.space/deploy/run.sh
 
-# Create deploy alias
-if ! grep -q "alias deploy" ~/.bashrc; then
-    echo "alias deploy='cd /var/www/prabhanshu.space && ./deploy/run.sh'" >> ~/.bashrc
-fi
+# Create global deploy command
+echo "🔗 Creating global 'deploy' command..."
+sudo ln -sf /var/www/prabhanshu.space/deploy/run.sh /usr/local/bin/deploy
+
+# Remove old alias if it exists in bashrc (cleanup)
+sed -i '/alias deploy=/d' ~/.bashrc
 
 echo ""
 
