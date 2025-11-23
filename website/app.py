@@ -151,6 +151,8 @@ def create_layout(title: str, *content):
     return Html(
         Head(
             Title(f"{title} - Prabhanshu"),
+            Meta(name="viewport", content="width=device-width, initial-scale=1"),
+            Style(GLOBAL_STYLES)
         ),
         Body(
             Div(
@@ -164,87 +166,59 @@ def create_layout(title: str, *content):
 
 @app.get("/")
 def home():
-    """Main homepage with profile information"""
     return create_layout(
         "Home",
-        Header(
-            H1("Prabhanshu"),
-            P("Data Scientist & AI Engineer | Building robust, intelligent applications", 
-              cls="subtitle")
-        ),
-        
-        # Introduction Section
-        Section(
-            H2(Span("👋", cls="emoji"), "Introduction"),
-            P(
-                "I am a Data Scientist and Engineer dedicated to building robust, scalable systems. "
-                "With a background in processing financial and industrial data at scale, I focus on "
-                "creating applications that are not just experimental, but production-ready."
+        [
+            Div(
+                H1("Prabhanshu", cls="fade-in"),
+                P("Data Scientist & AI Engineer", cls="subtitle fade-in"),
+                Div(
+                    A("GitHub", href="https://github.com/prabhanshu11", cls="btn"),
+                    A("LinkedIn", href="https://linkedin.com/in/prabhanshu11", cls="btn"),
+                    A("Email", href="mailto:hello@prabhanshu.space", cls="btn"),
+                    cls="links fade-in"
+                ),
+                cls="hero"
             ),
-            P(
-                "My expertise lies in architecting ", Strong("RAG pipelines"), ", optimizing data flows, "
-                "and developing native ", Strong("Databricks Apps"), " that leverage your data infrastructure effectively."
-            )
-        ),
-        
-        # About Me Section
-        Section(
-            H2(Span("💼", cls="emoji"), "About Me"),
-            P(
-                "I bridge the gap between data science and software engineering. "
-                "My experience ranges from handling critical financial datasets to building "
-                "advanced NLP models for safety analysis. I am passionate about:"
+            Div(
+                H2("Newsletter"),
+                P("Join my newsletter to get updates on my latest projects and thoughts on AI.", cls="text-justify"),
+                Form(
+                    Input(type="email", name="email", placeholder="Enter your email", required=True, style="padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc; width: 100%; margin-bottom: 1rem;"),
+                    Button("Subscribe", type="submit", cls="btn", style="width: 100%;"),
+                    action="/newsletter/subscribe",
+                    method="post",
+                    style="max-width: 400px; margin: 0 auto;"
+                ),
+                cls="section fade-in"
             ),
-            Ul(
-                Li("Building Production-Grade AI Applications"),
-                Li("Databricks App Development & Optimization"),
-                Li("Large Scale Data Processing (PySpark, Azure)"),
-                Li("Natural Language Processing & RAG"),
-                Li("Robust ETL Pipelines")
-            )
-        ),
-        
-        # Skills Section
-        Section(
-            H2(Span("🛠️", cls="emoji"), "Skills & Technologies"),
-            P("Python • RAG Pipelines • LLM Integration • Data Engineering • PySpark • Azure • Databricks Apps • FastHTML • Docker")
-        ),
-        
-        # Projects Section
-        Section(
-            H2(Span("📁", cls="emoji"), "Projects"),
-            P(
-                "This section will showcase my projects. "
-                "Stay tuned for updates!"
+            Div(
+                H2("About Me"),
+                P("""
+                I am a Data Scientist and AI Engineer with a passion for building intelligent systems. 
+                My expertise lies in developing scalable RAG pipelines, deploying Large Language Models (LLMs), 
+                and creating data-driven applications using Databricks Apps.
+                """),
+                P("""
+                I enjoy solving complex problems and turning data into actionable insights. 
+                Whether it's optimizing machine learning models or architecting cloud-native solutions on Azure, 
+                I am always eager to learn and innovate.
+                """),
+                cls="section fade-in"
             ),
-            P(
-                A("View my GitHub", href="https://github.com/prabhanshu11", target="_blank"),
-                " for my current work."
+            Div(
+                H2("Skills"),
+                Ul(
+                    Li("Python, SQL, PySpark"),
+                    Li("Machine Learning, Deep Learning, NLP"),
+                    Li("Generative AI, LLMs, RAG Pipelines"),
+                    Li("Databricks, Azure, Docker, Kubernetes"),
+                    Li("FastAPI, FastHTML, React"),
+                    cls="skills-list"
+                ),
+                cls="section fade-in"
             )
-        ),
-        
-        # Contact Section
-        Section(
-            H2(Span("📫", cls="emoji"), "Get in Touch"),
-            P(
-                "Feel free to reach out to me at: ",
-                A("hello @prabhanshu.space", href="mailto:hello @prabhanshu.space")
-            ),
-            P(
-                "GitHub: ",
-                A(" @prabhanshu11", 
-                  href="https://github.com/prabhanshu11",
-                  target="_blank")
-            )
-        ),
-        
-        Footer(
-            P(
-                "© 2025 Prabhanshu. Built with ",
-                A("FastHTML", href="https://fastht.ml", target="_blank"),
-                " and deployed on VPS with ❤️"
-            )
-        )
+        ]
     )
 
 
