@@ -172,6 +172,18 @@ def home():
             cls="hero"
         ),
         Div(
+            H2("Newsletter"),
+            P("Join my newsletter to get updates on my latest projects and thoughts on AI.", cls="text-justify"),
+            Form(
+                Input(type="email", name="email", placeholder="Enter your email", required=True, style="padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc; width: 100%; margin-bottom: 1rem;"),
+                Button("Subscribe", type="submit", cls="btn", style="width: 100%;"),
+                action="/newsletter/subscribe",
+                method="post",
+                style="max-width: 400px; margin: 0 auto;"
+            ),
+            cls="section fade-in"
+        ),
+        Div(
             H2("About Me"),
             P("""
             I am a Data Scientist and AI Engineer with a passion for building intelligent systems. 
@@ -194,18 +206,6 @@ def home():
                 Li("Databricks, Azure, Docker, Kubernetes"),
                 Li("FastAPI, FastHTML, React"),
                 cls="skills-list"
-            ),
-            cls="section fade-in"
-        ),
-        Div(
-            H2("Newsletter"),
-            P("Join my newsletter to get updates on my latest projects and thoughts on AI.", cls="text-justify"),
-            Form(
-                Input(type="email", name="email", placeholder="Enter your email", required=True, style="padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc; width: 100%; margin-bottom: 1rem;"),
-                Button("Subscribe", type="submit", cls="btn", style="width: 100%;"),
-                action="/newsletter/subscribe",
-                method="post",
-                style="max-width: 400px; margin: 0 auto;"
             ),
             cls="section fade-in"
         )

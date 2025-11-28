@@ -27,6 +27,7 @@ uv.lock
 .python-version
 
 # Environment
+github\ actions\ relevant\ creds/
 .env
 .env.local
 *.env
