@@ -103,7 +103,13 @@ GLOBAL_STYLES = Style('''
     
     .emoji {
         margin-right: 0.5rem;
-    }    
+    }
+
+    .skills-list li {
+        margin-bottom: 0.1rem;
+    }
+
+    @media (min-width: 768px) {
         header, section {
             padding: 1.5rem;
         }
@@ -176,7 +182,7 @@ def home():
             P("""
             I am a Data Scientist and AI Engineer with a passion for building intelligent systems. 
             My expertise lies in developing scalable RAG pipelines, deploying Large Language Models (LLMs), 
-            and creating data-driven applications using Databricks Apps.
+            and creating data-driven applications including Databricks Apps.
             """),
             P("""
             I enjoy solving complex problems and turning data into actionable insights. 
@@ -199,13 +205,13 @@ def home():
         ),
         Div(
             H2("Newsletter"),
-            P("Join my newsletter to get updates on my latest projects and thoughts on AI.", cls="text-justify"),
+            P("Join my newsletter to get updates on thoughts on AI.", cls="text-justify"),
             Form(
                 Input(type="email", name="email", placeholder="Enter your email", required=True, style="padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc; width: 100%; margin-bottom: 1rem;"),
                 Button("Subscribe", type="submit", cls="btn", style="width: 100%;"),
                 action="/newsletter/subscribe",
                 method="post",
-                style="max-width: 400px; margin: 0 auto;"
+                style="max-width: 400px;"
             ),
             cls="section fade-in"
         )
