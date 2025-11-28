@@ -7,9 +7,9 @@
 - **Base Website**: Portfolio content, "Data Scientist" profile, mobile text fixes.
 - **Dev Environment**: Docker-based local development workflow.
 
-### ⚠️ Phase 4: Continuous Deployment (Needs Debugging)
-- **Step 4.1: GitHub Actions:** Workflow exists but has a history of failures (needs investigation).
-- **Step 4.2: Automation:** Currently relying on manual `deploy` command until CI/CD is fixed.
+### ⚠️ Phase 4: Continuous Deployment (Debugging)
+- **Step 4.1: GitHub Actions:** Manual deployment verified on VPS. Now testing automated workflow.
+- **Step 4.2: Automation:** Conflicting systemd service removed. Port 8000 freed.
 
 ---
 
