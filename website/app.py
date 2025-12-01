@@ -2,6 +2,7 @@
 
 import os
 from fasthtml.common import *
+from website import auth
 
 # Configuration from environment variables
 HOST = os.getenv("HOST", "0.0.0.0")
@@ -132,6 +133,7 @@ ZOOM_REFLOW_SCRIPT = Script('''
 
 # Initialize FastHTML app
 app = FastHTML(
+    secret_key=os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod"),
     hdrs=(
         Meta(name="viewport", content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0"),
         Meta(name="description", content="Personal website of Prabhanshu - Software Developer and Python Enthusiast"),
@@ -214,6 +216,10 @@ def home():
                 style="max-width: 400px;"
             ),
             cls="section fade-in"
+        ),
+        Div(
+            A("My Zone", href="/myzone", style="font-size: 0.8rem; color: #888; text-decoration: none; float: right; margin-top: 1rem;"),
+            style="overflow: hidden; padding-bottom: 2rem;" 
         )
     )
 
@@ -261,6 +267,40 @@ def about():
                 "I believe in writing clean, maintainable code and using the right tool for the job. "
                 "Whether it's a complex RAG pipeline or a streamlined Databricks App, my goal is always "
                 "to deliver robust solutions that drive real business value."
+            )
+        ),
+        Footer(
+            P(A("← Back to Home", href="/")),
+            P(A("My Zone", href="/login", style="font-size: 0.8em; color: #ccc; text-decoration: none;"))
+        )
+    )
+
+
+# Authentication Routes
+app.get("/login")(auth.login_page)
+app.get("/auth/github/login")(auth.github_login)
+app.get("/auth/callback")(auth.github_callback)
+app.get("/logout")(auth.logout)
+
+@app.get("/myzone")
+def my_zone(session):
+    if not auth.check_auth(session):
+        return RedirectResponse("/login", status_code=303)
+    
+    return create_layout(
+        "My Zone",
+        Header(
+            H1("My Zone"),
+            P("Welcome back, Prabhanshu!", cls="subtitle"),
+            A("Logout", href="/logout", cls="btn", style="font-size: 0.8em;")
+        ),
+        Section(
+            H2("Dashboard"),
+            P("This is the private dashboard area."),
+            # Placeholder for future dashboard widgets
+            Div(
+                P("More features coming soon..."),
+                style="padding: 2rem; background: #f9f9f9; border-radius: 8px;"
             )
         ),
         Footer(

@@ -29,6 +29,7 @@ docker run -d \
   --name personal-website \
   --restart always \
   -p 8000:8000 \
+  --env-file .env \
   -e HOST=0.0.0.0 \
   -e PORT=8000 \
   personal-website

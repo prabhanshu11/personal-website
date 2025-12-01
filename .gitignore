@@ -58,3 +58,5 @@ htmlcov/
 deploy/*.pem
 deploy/*.key
 progress_actual.md
+deploy_key
+deploy_key.pub
