@@ -66,14 +66,47 @@ Visit: http://localhost:8000
 
 ## 🌐 Deployment
 
-### Initial VPS Setup (One-time)
+### Initial VPS Setup (Fresh Install)
 
+1.  **Prepare Local Files**:
+    Ensure you have `github actions relevant creds` inside the `deploy/` directory.
+
+2.  **Copy Files to VPS**:
+    Run this from your local machine:
+    ```bash
+    # Copy the deploy directory to the VPS (as root/sudo user)
+    scp -r deploy root@<vps-ip>:~/
+    ```
+
+3.  **Run Setup Script**:
+    SSH into the VPS and run the script:
+    ```bash
+    ssh root@<vps-ip>
+    cd deploy
+    ./setup-vps.sh
+    ```
+    
+    *This script will:*
+    - Create a `deploy` user.
+    - Install Docker, Nginx, UV, etc.
+    - Set up permissions.
+    - **Auto-create `.env`** using the credentials file you uploaded.
+    - Deploy the application.
+
+### Deploy Updates
+
+**Option 1: Automatic (GitHub Actions)**
+Just push to the `main` branch.
+
+**Option 2: Manual (SCP)**
+If you prefer not to use GitHub Actions:
 ```bash
-# SSH into VPS
-ssh prabhanshu@72.60.218.33
+# Push code to VPS
+ssh deploy@<vps-ip> "cd /var/www/prabhanshu.space && git pull"
+# Or if git isn't set up, scp files...
 
-# Run setup script (Installs Docker & Dependencies)
-./setup-vps.sh
+# Run deploy
+ssh deploy@<vps-ip> "deploy"
 ```
 
 ### Deploy Updates
