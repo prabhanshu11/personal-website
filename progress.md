@@ -13,6 +13,11 @@ This document tracks the deployed updates of `prabhanshu.space`.
 - **GitHub Actions**: Automated CI/CD pipeline established. Pushes to `main` automatically deploy to the VPS.
 - **Automation**: Docker containerization ensures consistent environments.
 
+### Phase 5: Foundation & Auth
+- **Auth**: Implemented GitHub OAuth login.
+- **Verification**: Evaluated and confirmed "My Zone" login flow works on production VPS.
+- **UI**: Added "My Zone" access point.
+
 ---
 
 *For detailed roadmap and future plans, refer to the internal `progress_actual.md`.*
