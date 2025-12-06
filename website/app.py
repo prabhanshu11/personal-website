@@ -2,7 +2,9 @@
 
 import os
 from fasthtml.common import *
-from website import auth
+from website import auth, db
+import re
+from datetime import datetime, timedelta
 
 # Configuration from environment variables
 HOST = os.getenv("HOST", "0.0.0.0")
@@ -140,7 +142,8 @@ app = FastHTML(
         Meta(name="author", content="Prabhanshu"),
         Meta(charset="utf-8"),
         GLOBAL_STYLES,
-        ZOOM_REFLOW_SCRIPT
+        ZOOM_REFLOW_SCRIPT,
+        Script(src="https://unpkg.com/htmx.org@1.9.10")
     ),
 )
 
@@ -150,18 +153,18 @@ def create_layout(title: str, *content):
     """Create a consistent page layout"""
     return Html(
         Head(
-            Title(f"{title} - Prabhanshu"),
-            Meta(name="viewport", content="width=device-width, initial-scale=1"),
-            GLOBAL_STYLES
-        ),
-        Body(
-            Div(
-                *content,
-                cls="container"
-            )
-        ),
-        lang="en"
-    )
+             Title(f"{title} - Prabhanshu"),
+             Meta(name="viewport", content="width=device-width, initial-scale=1"),
+             GLOBAL_STYLES
+         ),
+         Body(
+             Div(
+                 *content,
+                 cls="container"
+             )
+         ),
+         lang="en"
+     )
 
 
 @app.get("/")
@@ -209,10 +212,15 @@ def home():
             H2("Newsletter"),
             P("Join my newsletter to get updates on thoughts on AI.", cls="text-justify"),
             Form(
-                Input(type="email", name="email", placeholder="Enter your email", required=True, style="padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc; width: 100%; margin-bottom: 1rem;"),
+                Input(type="email", name="email", placeholder="Enter your email", required=True, 
+                      style="padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc; width: 100%; margin-bottom: 1rem;"),
                 Button("Subscribe", type="submit", cls="btn", style="width: 100%;"),
+                hx_post="/newsletter/subscribe",
+                hx_target="this",
+                hx_swap="outerHTML",
                 action="/newsletter/subscribe",
                 method="post",
+                id="newsletter-form",
                 style="max-width: 400px;"
             ),
             cls="section fade-in"
@@ -222,6 +230,65 @@ def home():
             style="overflow: hidden; padding-bottom: 2rem;" 
         )
     )
+
+def parse_and_format_ts(iso_ts, tz="UTC"):
+    """
+    Parses ISO timestamp and returns formatted string in requested timezone.
+    Assumes ISO string in UTC.
+    """
+    try:
+        dt = datetime.fromisoformat(iso_ts)
+        
+        if tz == "IST":
+             # Manually add 5h 30m for IST
+            from datetime import timedelta
+            dt = dt + timedelta(hours=5, minutes=30)
+            return dt.strftime("%Y-%m-%d %H:%M:%S IST")
+        else:
+            return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
+    except:
+        return iso_ts
+
+def is_valid_email(email):
+    # Basic regex for email validation
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    return re.match(pattern, email) is not None
+
+@app.post("/newsletter/subscribe")
+def subscribe(email: str):
+    if not is_valid_email(email):
+        return Div(
+            P("❌ Invalid email address.", style="color: red; margin-bottom: 0.5rem;"),
+            Button("Try Again", onclick="this.parentElement.innerHTML = document.getElementById('newsletter-form-backup').innerHTML", cls="btn", style="width: 100%;"),
+            # We might want to just re-render the form. 
+            # Ideally we return a form with the error message.
+            # Simpler approach for now:
+             Form(
+                Input(type="email", name="email", value=email, placeholder="Enter your email", required=True, 
+                      style="padding: 0.5rem; border-radius: 5px; border: 1px solid red; width: 100%; margin-bottom: 1rem;"),
+                P("Please enter a valid email address.", style="color: red; font-size: 0.8em; margin-top: -0.8rem; margin-bottom: 1rem;"),
+                Button("Subscribe", type="submit", cls="btn", style="width: 100%;"),
+                hx_post="/newsletter/subscribe",
+                hx_target="#newsletter-form",
+                hx_swap="innerHTML",
+                style="max-width: 400px;"
+            )
+        )
+        
+    user_id, created = db.add_subscriber(email)
+    
+    if created:
+        return Div(
+            H3("🎉 Subscribed!", style="color: green; margin-bottom: 1rem;"),
+            P("Thank you for joining. I'll keep you posted!"),
+            style="text-align: center; padding: 1rem; border: 1px solid green; border-radius: 8px; background-color: #f0fff4;"
+        )
+    else:
+        return Div(
+            H3("✅ Already Subscribed", style="color: #0066cc; margin-bottom: 1rem;"),
+            P("You're already on the list!"),
+            style="text-align: center; padding: 1rem; border: 1px solid #0066cc; border-radius: 8px; background-color: #f0f7ff;"
+        )
 
 
 @app.get("/health")
@@ -297,6 +364,13 @@ def my_zone(session):
         Section(
             H2("Dashboard"),
             P("This is the private dashboard area."),
+            
+            # Application Stats / Links
+            Div(
+                A("📧 Newsletter Subscribers", href="/myzone/newsletter", cls="btn", style="background: #eef; color: #333; border: 1px solid #ccd; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 1rem;"),
+                style="margin-bottom: 2rem;"
+            ),
+            
             # Placeholder for future dashboard widgets
             Div(
                 P("More features coming soon..."),
@@ -307,6 +381,85 @@ def my_zone(session):
             P(A("← Back to Home", href="/"))
         )
     )
+
+@app.get("/myzone/newsletter")
+def newsletter_list(session, tz: str = "UTC"):
+    if not auth.check_auth(session):
+        return RedirectResponse("/login", status_code=303)
+        
+    subs = db.get_all_subscribers()
+    
+    # Determine next toggle state
+    next_tz = "IST" if tz == "UTC" else "UTC"
+    toggle_label = f"Switch to {next_tz}"
+    
+    rows = []
+    for s in subs:
+        ts_str = parse_and_format_ts(s['created_at'], tz)
+        rows.append(
+            Tr(
+                Td(s['id'], style="padding: 0.5rem; border-bottom: 1px solid #eee;"),
+                Td(s['email'], style="padding: 0.5rem; border-bottom: 1px solid #eee;"),
+                Td(ts_str, style="padding: 0.5rem; border-bottom: 1px solid #eee;"),
+                Td(s['status'], style="padding: 0.5rem; border-bottom: 1px solid #eee;"),
+                Td(
+                    Form(
+                        Button("Delete", 
+                               type="submit",
+                               cls="btn", 
+                               style="background: #fee; color: red; border: 1px solid #faa; font-size: 0.8em; padding: 0.2rem 0.5rem; cursor: pointer;"
+                        ),
+                        method="post",
+                        action=f"/myzone/newsletter/delete/{s['id']}",
+                        style="display: inline;"
+                    ),
+                    style="padding: 0.5rem; border-bottom: 1px solid #eee;"
+                )
+            )
+        )
+        
+    return create_layout(
+        "Newsletter Subscribers",
+        Header(
+            H1("Newsletter Subscribers"),
+            P(f"Total: {len(subs)}", cls="subtitle"),
+             Div(
+                A("← Back to Dashboard", href="/myzone", cls="btn", style="font-size: 0.9em;"),
+                style="margin-top: 1rem;"
+            )
+        ),
+        Section(
+            Div(
+                A(toggle_label, 
+                  href=f"/myzone/newsletter?tz={next_tz}",
+                  cls="btn",
+                  style="font-size: 0.8em; margin-bottom: 1rem; display: inline-block; text-decoration: none; border: 1px solid #ccc; padding: 0.2rem 0.5rem; border-radius: 4px; background: #f0f0f0; color: black;"
+                )
+            ),
+            Table(
+                Thead(
+                    Tr(
+                        Th("ID", style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ccc;"),
+                        Th("Email", style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ccc;"),
+                        Th(f"Joined At ({tz})", style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ccc;"),
+                        Th("Status", style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ccc;"),
+                        Th("Action", style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ccc;"),
+                    )
+                ),
+                Tbody(*rows),
+                style="width: 100%; border-collapse: collapse;"
+            )
+        )
+    )
+
+@app.post("/myzone/newsletter/delete/{id}")
+def delete_subscriber(id: int, session):
+    if not auth.check_auth(session):
+        return Response(status_code=403)
+        
+    db.delete_subscriber(id)
+    # Redirect back to the list to refresh the page
+    return RedirectResponse("/myzone/newsletter", status_code=303)
 
 
 # Custom 404 handler
