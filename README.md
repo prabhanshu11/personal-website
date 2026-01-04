@@ -160,6 +160,142 @@ deploy
 
 This runs the `deploy/run.sh` script which handles the Docker build and restart process.
 
+## ⚙️ GitHub Actions Deployment
+
+### Overview
+
+The repository uses GitHub Actions to automatically deploy on push to `main`. The workflow:
+1. Sets up SSH agent with the deploy key
+2. Adds VPS to known hosts
+3. SSHes into VPS and runs `./deploy/run.sh`
+
+### Workflow File
+
+Location: `.github/workflows/deploy.yml`
+
+```yaml
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add VPS to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via SSH
+        run: |
+          ssh ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/prabhanshu.space && ./deploy/run.sh"
+```
+
+### Required Secrets
+
+Set these in: `Settings > Secrets and variables > Actions > Repository secrets`
+
+| Secret | Description | Example |
+|--------|-------------|---------|
+| `VPS_HOST` | VPS IP address | `72.60.218.33` |
+| `VPS_USERNAME` | SSH username | `root` |
+| `SSH_PRIVATE_KEY` | Private SSH key (**PEM format**) | See below |
+
+### ⚠️ CRITICAL: SSH Key Format
+
+**The SSH key MUST be in PEM format, not OPENSSH format.**
+
+| Format | Header | Works? |
+|--------|--------|--------|
+| **PEM** (classic) | `-----BEGIN RSA PRIVATE KEY-----` | ✅ Yes |
+| **OPENSSH** (new) | `-----BEGIN OPENSSH PRIVATE KEY-----` | ❌ No |
+
+Many SSH actions (including `appleboy/ssh-action` and some versions of `webfactory/ssh-agent`) fail to parse the newer OPENSSH format, resulting in cryptic errors like `ssh: no key found`.
+
+### Generating a Compatible Key
+
+```bash
+# Generate RSA key in PEM format (compatible with GitHub Actions)
+ssh-keygen -t rsa -b 4096 -m PEM -f ~/.ssh/deploy_key -N "" -C "github-actions-deploy"
+
+# View private key (add this to GitHub secret)
+cat ~/.ssh/deploy_key
+
+# View public key (add this to VPS authorized_keys)
+cat ~/.ssh/deploy_key.pub
+
+# Add public key to VPS
+cat ~/.ssh/deploy_key.pub | ssh root@<VPS_IP> "cat >> ~/.ssh/authorized_keys"
+
+# Test the key works
+ssh -i ~/.ssh/deploy_key root@<VPS_IP> "echo SUCCESS"
+```
+
+### Setting Secrets via CLI (Recommended)
+
+Using `gh` CLI avoids copy-paste formatting issues:
+
+```bash
+# Authenticate gh CLI
+gh auth login
+
+# Set secrets
+gh secret set VPS_HOST --repo <username>/<repo> --body "<VPS_IP>"
+gh secret set VPS_USERNAME --repo <username>/<repo> --body "root"
+gh secret set SSH_PRIVATE_KEY --repo <username>/<repo> --body "$(cat ~/.ssh/deploy_key)"
+```
+
+### Debugging Failed Workflows
+
+```bash
+# List recent workflow runs
+gh run list --limit 5
+
+# View logs for a specific run
+gh run view <RUN_ID> --log-failed
+
+# Manually trigger workflow
+gh workflow run deploy.yml --ref main
+```
+
+### Common Errors & Solutions
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `ssh: no key found` | Key in OPENSSH format | Generate key with `-m PEM` flag |
+| `ssh: handshake failed: unable to authenticate` | Public key not on VPS | Add public key to `~/.ssh/authorized_keys` on VPS |
+| `ssh-keyscan` fails | VPS_HOST secret is wrong | Update VPS_HOST via `gh secret set` |
+| `Permission denied` | Key mismatch | Verify key fingerprints match on both sides |
+
+### Verifying Key Fingerprints
+
+```bash
+# Local key fingerprint
+ssh-keygen -lf ~/.ssh/deploy_key
+
+# VPS authorized_keys fingerprints
+ssh root@<VPS_IP> "ssh-keygen -lf ~/.ssh/authorized_keys"
+
+# Both should show the same SHA256 hash for the deploy key
+```
+
+### Why Not `appleboy/ssh-action`?
+
+We initially used `appleboy/ssh-action` but switched to `webfactory/ssh-agent` because:
+1. `appleboy/ssh-action` had issues parsing OPENSSH format keys
+2. `webfactory/ssh-agent` is more reliable and widely used
+3. Separating SSH setup from command execution gives clearer error messages
+
 ## 🔧 Useful Commands
 
 ### On VPS
