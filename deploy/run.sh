@@ -60,23 +60,30 @@ cd ..
 # ==========================================
 # NGINX CONFIG UPDATE
 # ==========================================
-echo "🔧 Checking nginx configuration..."
+echo "🔧 Updating nginx configuration..."
 NGINX_CONF="/etc/nginx/sites-available/prabhanshu.space"
 REPO_NGINX_CONF="deploy/nginx/personal-website.conf"
 
-# Check if dashboard routes exist in nginx config
-if ! grep -q "dashboard/habits" "$NGINX_CONF" 2>/dev/null; then
-    echo "📝 Updating nginx config with dashboard routes..."
-    # Backup existing config
-    sudo cp "$NGINX_CONF" "${NGINX_CONF}.bak" 2>/dev/null || true
-    # Copy new config (will be modified by certbot on first run)
+# Always backup existing config with timestamp
+sudo cp "$NGINX_CONF" "${NGINX_CONF}.bak.$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
+
+# Check if nginx config has outdated dashboard routes (with trailing slash)
+if grep -q "location /dashboard/habits/" "$NGINX_CONF" 2>/dev/null; then
+    echo "📝 Detected old nginx config (trailing slash) - updating..."
+    # Copy new config
     sudo cp "$REPO_NGINX_CONF" "$NGINX_CONF"
-    # Re-run certbot to add SSL (non-interactive)
+    # Re-run certbot to add SSL if needed (non-interactive)
+    sudo certbot --nginx -d prabhanshu.space -d www.prabhanshu.space --non-interactive --agree-tos --redirect || true
+    sudo nginx -t && sudo systemctl reload nginx
+    echo "✅ Nginx config updated and reloaded"
+elif ! grep -q "dashboard/habits" "$NGINX_CONF" 2>/dev/null; then
+    echo "📝 Dashboard routes not found - adding..."
+    sudo cp "$REPO_NGINX_CONF" "$NGINX_CONF"
     sudo certbot --nginx -d prabhanshu.space -d www.prabhanshu.space --non-interactive --agree-tos --redirect || true
     sudo nginx -t && sudo systemctl reload nginx
     echo "✅ Nginx config updated with dashboard routes"
 else
-    echo "✅ Nginx already has dashboard routes"
+    echo "✅ Nginx config is already up to date"
 fi
 
 # ==========================================
