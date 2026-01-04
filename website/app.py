@@ -355,7 +355,7 @@ def my_zone(session):
         return RedirectResponse("/login", status_code=303)
 
     # Use direct URL for local dev, proxied path for production
-    habit_tracker_url = "http://localhost:5173" if DEBUG else "/dashboard/habits/"
+    habit_tracker_url = "http://localhost:5173" if DEBUG else "/dashboard/habits"
 
     return create_layout(
         "My Zone",
@@ -396,7 +396,7 @@ def life_dashboard(session):
         return RedirectResponse("/login", status_code=303)
 
     # Use direct URL for local dev, proxied path for production
-    habit_tracker_url = "http://localhost:5173" if DEBUG else "/dashboard/habits/"
+    habit_tracker_url = "http://localhost:5173" if DEBUG else "/dashboard/habits"
 
     return create_layout(
         "Life Dashboard",
