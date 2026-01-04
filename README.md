@@ -23,13 +23,22 @@ A modern personal website built with Python and FastHTML, deployed on a VPS with
 personal-website/
 ├── website/
 │   ├── __init__.py
-│   └── app.py              # Main FastHTML application
+│   ├── app.py              # Main FastHTML application
+│   ├── auth.py             # GitHub OAuth authentication
+│   └── db.py               # SQLite database layer
+├── dashboard/              # Life Dashboard (Docker container)
+│   ├── docker-compose.yml  # Orchestrates habit-tracker services
+│   ├── Dockerfile.backend  # FastAPI backend
+│   ├── Dockerfile.frontend # Next.js frontend
+│   ├── .env.example        # Environment template
+│   └── habit-tracker/      # Habit tracker source (backend + web)
 ├── deploy/
 │   ├── nginx/              # Nginx configuration
 │   ├── systemd/            # Systemd service
 │   ├── setup-vps.sh        # One-time VPS setup script
 │   └── run.sh              # Deployment script
-├── tests/                  # Test files (future)
+├── data/                   # SQLite database
+├── tests/                  # Test files
 ├── pyproject.toml          # UV/Python project config
 ├── .gitignore
 └── README.md
@@ -63,6 +72,26 @@ DEBUG=True uv run python -m src.app
 ```
 
 Visit: http://localhost:8000
+
+### Running with Life Dashboard
+
+The Life Dashboard embeds the habit tracker (GitHub activity) in the private zone.
+
+```bash
+# Terminal 1: Personal website
+DEBUG=True uv run python -m website.app
+
+# Terminal 2: Habit tracker backend
+cd dashboard/habit-tracker/backend
+uv sync
+PYTHONPATH=src uv run uvicorn habits_api.app:app --port 8081
+
+# Terminal 3: Habit tracker frontend
+cd dashboard/habit-tracker/web
+npm install && npm run dev
+```
+
+With DEBUG=True, the iframe points directly to localhost:5173. In production, Nginx proxies `/dashboard/habits/` and `/dashboard/api/`.
 
 ## 🌐 Deployment
 
