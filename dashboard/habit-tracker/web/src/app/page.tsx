@@ -29,7 +29,7 @@ export default function HomePage() {
   const [tapeBase, setTapeBase] = useState<string>('$ habits summary --window=24h')
   const [tick, setTick] = useState(0)
   useTapeTicker(showTape, setTick, setTapeText, tapeBase, tapeColored)
-  useTapeTicker(initializing && !overlayHide, () => {}, setTapeText, tapeBase, tapeColored)
+  useTapeTicker(initializing && !overlayHide, null, setTapeText, tapeBase, tapeColored)
 
   async function refreshNow() {
     try {
@@ -162,16 +162,15 @@ export default function HomePage() {
 }
 
 // animate dots in the tape during in-flight states
-function useTapeTicker(enabled: boolean, setTick: (n: number) => void, setText: (s: string) => void, base: string, colored: boolean) {
+function useTapeTicker(enabled: boolean, setTick: React.Dispatch<React.SetStateAction<number>> | null, setText: (s: string) => void, base: string, colored: boolean) {
   useEffect(() => {
     if (!enabled || colored) return
+    let tick = 0
     const id = setInterval(() => {
-      setTick((t) => {
-        const next = (t + 1) % 12
-        const dots = '.'.repeat(next % 4)
-        setText(`${base} ${dots}`)
-        return next
-      })
+      tick = (tick + 1) % 12
+      const dots = '.'.repeat(tick % 4)
+      setText(`${base} ${dots}`)
+      if (setTick) setTick(tick)
     }, 250)
     return () => clearInterval(id)
   }, [enabled, colored, base, setTick, setText])
