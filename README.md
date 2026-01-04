@@ -376,6 +376,30 @@ dig www.prabhanshu.space
 # Should return: 72.60.218.33
 ```
 
+## 🔗 Related Infrastructure
+
+### VPS Bootstrap System
+
+This website depends on the [vps_bootstrap](https://github.com/prabhanshu11/vps_bootstrap) repository for server infrastructure management.
+
+**What vps_bootstrap does:**
+- Ensures nginx is installed and configured
+- Manages SSL certificates via certbot
+- Auto-starts Docker containers on boot
+- Provides recovery from server reboots
+
+**Relationship:**
+1. `personal-website` provides the nginx config (at `deploy/nginx/personal-website.conf`)
+2. `vps_bootstrap` copies and applies that config to the system
+3. `vps_bootstrap` runs certbot to obtain/renew SSL certificates
+4. `vps_bootstrap` ensures containers from this repo are running
+
+**Deployment order:**
+1. `personal-website` deploys (via its GitHub Actions)
+2. `vps_bootstrap` runs after to ensure infrastructure is configured
+
+See the [vps_bootstrap README](https://github.com/prabhanshu11/vps_bootstrap) for details on the bootstrap system.
+
 ## 📝 License
 
 MIT License - feel free to use this as a template for your own website!
