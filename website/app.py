@@ -353,7 +353,10 @@ app.get("/logout")(auth.logout)
 def my_zone(session):
     if not auth.check_auth(session):
         return RedirectResponse("/login", status_code=303)
-    
+
+    # Use direct URL for local dev, proxied path for production
+    habit_tracker_url = "http://localhost:5173" if DEBUG else "/dashboard/habits/"
+
     return create_layout(
         "My Zone",
         Header(
@@ -363,19 +366,61 @@ def my_zone(session):
         ),
         Section(
             H2("Dashboard"),
-            P("This is the private dashboard area."),
-            
+
             # Application Stats / Links
             Div(
                 A("📧 Newsletter Subscribers", href="/myzone/newsletter", cls="btn", style="background: #eef; color: #333; border: 1px solid #ccd; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 1rem;"),
-                style="margin-bottom: 2rem;"
+                style="margin-bottom: 1rem;"
             ),
-            
-            # Placeholder for future dashboard widgets
+
+            # Habit Tracker Dashboard
             Div(
-                P("More features coming soon..."),
-                style="padding: 2rem; background: #f9f9f9; border-radius: 8px;"
+                H3("GitHub Activity (24h)"),
+                Iframe(
+                    src=habit_tracker_url,
+                    style="width: 100%; height: 600px; border: 2px solid #ccc; border-radius: 8px;",
+                    title="Habit Tracker"
+                ),
+                style="margin-bottom: 2rem;"
             )
+        ),
+        Footer(
+            P(A("← Back to Home", href="/"))
+        )
+    )
+
+
+@app.get("/myzone/dashboard")
+def life_dashboard(session):
+    if not auth.check_auth(session):
+        return RedirectResponse("/login", status_code=303)
+
+    # Use direct URL for local dev, proxied path for production
+    habit_tracker_url = "http://localhost:5173" if DEBUG else "/dashboard/habits/"
+
+    return create_layout(
+        "Life Dashboard",
+        Header(
+            H1("Life Dashboard"),
+            P("Personal metrics and trackers", cls="subtitle"),
+            Div(
+                A("← Back to My Zone", href="/myzone", cls="btn", style="font-size: 0.9em;"),
+                A("Logout", href="/logout", cls="btn", style="font-size: 0.8em; margin-left: 1rem;"),
+            )
+        ),
+        Section(
+            H2("Habit Tracker"),
+            P("GitHub commit activity in the last 24 hours"),
+            Iframe(
+                src=habit_tracker_url,
+                style="width: 100%; height: 700px; border: 2px solid #ccc; border-radius: 8px;",
+                title="Habit Tracker"
+            )
+        ),
+        Section(
+            H2("More Coming Soon"),
+            P("Additional dashboards will be added here..."),
+            style="padding: 2rem; background: #f9f9f9; border-radius: 8px;"
         ),
         Footer(
             P(A("← Back to Home", href="/"))

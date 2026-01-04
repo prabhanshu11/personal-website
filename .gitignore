@@ -27,7 +27,6 @@ uv.lock
 .python-version
 
 # Environment
-github\ actions\ relevant\ creds/
 .env
 .env.local
 *.env
@@ -63,4 +62,14 @@ deploy_key.pub
 
 # Local Data
 data/*.db
+data/*.db-shm
+data/*.db-wal
 .agent/
+.sesskey
+
+# Dashboard build artifacts
+dashboard/.env
+dashboard/habit-tracker/web/node_modules/
+dashboard/habit-tracker/web/.next/
+dashboard/habit-tracker/backend/*.db
+dashboard/habit-tracker/backend/__pycache__/

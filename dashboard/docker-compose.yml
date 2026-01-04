@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  habit-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: dashboard-habit-backend
+    restart: always
+    ports:
+      - "127.0.0.1:8081:8081"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REPO_ALLOWLIST=${REPO_ALLOWLIST:-ALL}
+      - DATABASE_URL=sqlite+aiosqlite:///./data/data.db
+      - SCHEDULER_ENABLED=${SCHEDULER_ENABLED:-true}
+      - SCHEDULER_INTERVAL_MINUTES=${SCHEDULER_INTERVAL_MINUTES:-15}
+    volumes:
+      - habit_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  habit-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: dashboard-habit-frontend
+    restart: always
+    ports:
+      - "127.0.0.1:5173:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE=/dashboard/api
+    depends_on:
+      - habit-backend
+
+volumes:
+  habit_data:
