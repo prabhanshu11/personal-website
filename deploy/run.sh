@@ -103,7 +103,7 @@ else
 fi
 
 echo "🔍 Testing dashboard frontend..."
-if curl -f http://localhost:5173 > /dev/null 2>&1; then
+if curl -f http://localhost:5173/dashboard/habits > /dev/null 2>&1; then
     echo "✅ Dashboard frontend is healthy!"
 else
     echo "⚠️  Dashboard frontend not responding"
