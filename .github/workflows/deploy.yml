@@ -21,5 +21,7 @@ jobs:
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy via SSH
+        env:
+          HABITS_GITHUB_TOKEN: ${{ secrets.HABITS_GITHUB_TOKEN }}
         run: |
-          ssh ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/prabhanshu.space && ./deploy/run.sh"
+          ssh ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/prabhanshu.space && HABITS_GITHUB_TOKEN='${{ secrets.HABITS_GITHUB_TOKEN }}' ./deploy/run.sh"

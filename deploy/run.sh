@@ -41,13 +41,23 @@ docker run -d \
 echo "🐳 Building and deploying dashboard containers..."
 cd dashboard
 
-# Create .env for dashboard if it doesn't exist (copy from example)
-if [ ! -f .env ]; then
-    if [ -f .env.example ]; then
-        echo "📝 Creating dashboard .env from example..."
-        cp .env.example .env
-        echo "⚠️  Warning: Dashboard .env created from example. Update GITHUB_TOKEN for full functionality."
-    fi
+# Create/update .env for dashboard with GitHub token from secrets
+echo "📝 Creating dashboard .env file..."
+cat > .env << EOF
+# Habit Tracker Backend
+GITHUB_TOKEN=${HABITS_GITHUB_TOKEN:-ghp_placeholder_token}
+REPO_ALLOWLIST=ALL
+SCHEDULER_ENABLED=true
+SCHEDULER_INTERVAL_MINUTES=15
+
+# Frontend (built into the image, not runtime)
+# NEXT_PUBLIC_API_BASE=/dashboard/api
+EOF
+
+if [ "$HABITS_GITHUB_TOKEN" = "" ] || [ "$HABITS_GITHUB_TOKEN" = "ghp_placeholder_token" ]; then
+    echo "⚠️  Warning: HABITS_GITHUB_TOKEN not provided. Dashboard may not fetch GitHub data."
+else
+    echo "✅ Dashboard .env configured with GitHub token from secrets"
 fi
 
 # Build and start dashboard containers
