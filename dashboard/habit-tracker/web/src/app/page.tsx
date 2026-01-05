@@ -16,17 +16,22 @@ type Summary = {
 }
 
 export default function HomePage() {
-  const summaryUrl = `${API_BASE}/metrics/summary?window=24h`
-  const { data, error, isLoading, mutate } = useSWR<Summary>(summaryUrl, fetcher, { refreshInterval: 15000 })
+  // Fetch data for all three windows
+  const summary48h = useSWR<Summary>(`${API_BASE}/metrics/summary?window=48h`, fetcher, { refreshInterval: 15000 })
+  const summary24h = useSWR<Summary>(`${API_BASE}/metrics/summary?window=24h`, fetcher, { refreshInterval: 15000 })
+  const summary7d = useSWR<Summary>(`${API_BASE}/metrics/summary?window=7d`, fetcher, { refreshInterval: 15000 })
+
+  // Use 48h as primary data source
+  const { data, error, isLoading, mutate } = summary48h
   const [refreshing, setRefreshing] = useState(false)
   const [showProgress, setShowProgress] = useState(true)
   const [showTape, setShowTape] = useState(true)
   const initializing = isLoading && !data
   const [overlayHide, setOverlayHide] = useState(false)
   const [tapeVariant, setTapeVariant] = useState<'green'|'amber'|'red'|'mint'>('green')
-  const [tapeText, setTapeText] = useState<string>('$ habits summary --window=24h')
+  const [tapeText, setTapeText] = useState<string>('$ habits summary --window=48h')
   const [tapeColored, setTapeColored] = useState(false)
-  const [tapeBase, setTapeBase] = useState<string>('$ habits summary --window=24h')
+  const [tapeBase, setTapeBase] = useState<string>('$ habits summary --window=48h')
   const [tick, setTick] = useState(0)
   useTapeTicker(showTape, setTick, setTapeText, tapeBase, tapeColored)
   useTapeTicker(initializing && !overlayHide, null, setTapeText, tapeBase, tapeColored)
@@ -38,11 +43,11 @@ export default function HomePage() {
       setShowTape(true)
       setTapeColored(false)
       setTapeVariant('amber')
-      setTapeBase("$ curl -X POST 'http://127.0.0.1:8081/admin/ingest' && curl 'http://127.0.0.1:8081/metrics/summary?window=24h'")
-      setTapeText("$ curl -X POST 'http://127.0.0.1:8081/admin/ingest' && curl 'http://127.0.0.1:8081/metrics/summary?window=24h'")
+      setTapeBase("$ curl -X POST 'http://127.0.0.1:8081/admin/ingest' && curl 'http://127.0.0.1:8081/metrics/summary?window=48h'")
+      setTapeText("$ curl -X POST 'http://127.0.0.1:8081/admin/ingest' && curl 'http://127.0.0.1:8081/metrics/summary?window=48h'")
       await fetch(`${API_BASE}/admin/ingest`, { method: 'POST' })
-      // revalidate summary after triggering
-      await mutate()
+      // revalidate all summaries after triggering
+      await Promise.all([summary48h.mutate(), summary24h.mutate(), summary7d.mutate()])
     } finally {
       setRefreshing(false)
     }
@@ -54,8 +59,8 @@ export default function HomePage() {
       setShowTape(true)
       setTapeColored(false)
       setTapeVariant('green')
-      setTapeBase("$ curl 'http://127.0.0.1:8081/metrics/summary?window=24h'")
-      setTapeText("$ curl 'http://127.0.0.1:8081/metrics/summary?window=24h'")
+      setTapeBase("$ curl 'http://127.0.0.1:8081/metrics/summary?window=48h'")
+      setTapeText("$ curl 'http://127.0.0.1:8081/metrics/summary?window=48h'")
     }
   }, [isLoading, refreshing])
 
@@ -98,7 +103,7 @@ export default function HomePage() {
       <header className="ink-panel p-6 flex items-center justify-between gap-4 relative">
         <div>
           <h1 className="text-3xl font-bold mb-1">Git Habit Tracker</h1>
-          <p className="opacity-80">Activity in the last 24 hours</p>
+          <p className="opacity-80">Activity in the last 48 hours</p>
         </div>
         <div className="hidden md:block flex-1 px-4">
           {showTape && (
@@ -126,17 +131,37 @@ export default function HomePage() {
         )}
       </header>
 
-      <section className="ink-panel p-6 flex items-center justify-between">
-        <div>
-          <div className="text-sm opacity-80">Lines updated (24h)</div>
-          <div className="big-number font-extrabold">{isLoading ? '…' : (data?.total_lines_updated ?? 0)}</div>
-        </div>
-        <div className="text-right space-y-1">
+      <section className="grid md:grid-cols-2 gap-4">
+        {/* 48h + 24h metrics */}
+        <div className="ink-panel p-6 flex items-center justify-between">
           <div>
-            <div className="text-sm opacity-80">Repos updated</div>
-            <div className="text-lg font-semibold">{isLoading ? '…' : (data?.repos_updated_count ?? 0)}</div>
+            <div className="text-sm opacity-80">Lines updated (48h)</div>
+            <div className="big-number font-extrabold">{summary48h.isLoading ? '…' : (summary48h.data?.total_lines_updated ?? 0)}</div>
+            <div className="text-xs opacity-60 mt-2" style={{fontSize: '50%'}}>
+              24h: {summary24h.isLoading ? '…' : (summary24h.data?.total_lines_updated ?? 0)} lines
+            </div>
           </div>
-          <div className="text-xs opacity-80">Last checked: {data?.last_checked_at ? new Date(data.last_checked_at).toLocaleString() : '—'}</div>
+          <div className="text-right space-y-1">
+            <div>
+              <div className="text-sm opacity-80">Repos updated</div>
+              <div className="text-lg font-semibold">{summary48h.isLoading ? '…' : (summary48h.data?.repos_updated_count ?? 0)}</div>
+            </div>
+            <div className="text-xs opacity-80">Last checked: {data?.last_checked_at ? new Date(data.last_checked_at).toLocaleString() : '—'}</div>
+          </div>
+        </div>
+
+        {/* 7-day metrics */}
+        <div className="ink-panel p-6 flex items-center justify-between">
+          <div>
+            <div className="text-sm opacity-80">Lines updated (7d)</div>
+            <div className="big-number font-extrabold">{summary7d.isLoading ? '…' : (summary7d.data?.total_lines_updated ?? 0)}</div>
+          </div>
+          <div className="text-right space-y-1">
+            <div>
+              <div className="text-sm opacity-80">Repos updated</div>
+              <div className="text-lg font-semibold">{summary7d.isLoading ? '…' : (summary7d.data?.repos_updated_count ?? 0)}</div>
+            </div>
+          </div>
         </div>
       </section>
 
