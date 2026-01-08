@@ -109,6 +109,9 @@ async def summary(window: str = Query("24h"), session: AsyncSession = Depends(ge
             if r.last_checked_at and (r.last_checked_at >= last_checked - tolerance):
                 repos_updated += 1
 
+    # Sort repos by commits count descending (most active first)
+    per_repo.sort(key=lambda r: r.commits_count, reverse=True)
+
     out = SummaryOut(
         window=w.value,
         total_commits=total_commits,
