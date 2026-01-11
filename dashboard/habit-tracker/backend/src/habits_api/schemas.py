@@ -19,6 +19,9 @@ class SummaryRepo(BaseModel):
     full_name: str
     commits_count: int
     is_private: bool
+    additions: int
+    deletions: int
+    changed_files: int
 
 
 class SummaryOut(BaseModel):

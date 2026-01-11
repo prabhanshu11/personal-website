@@ -149,3 +149,11 @@ body {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(300%); }
 }
+
+/* Colorblind-friendly additions/deletions colors */
+.additions-color {
+  color: #2E7D32; /* teal-green - distinguishable for deuteranopia/protanopia */
+}
+.deletions-color {
+  color: #D84315; /* orange-red - distinguishable for colorblind users */
+}

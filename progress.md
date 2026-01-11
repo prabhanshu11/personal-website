@@ -20,4 +20,14 @@ This document tracks the deployed updates of `prabhanshu.space`.
 
 ---
 
+## Future Dashboard Features
+
+### Git Branch Visualization
+- **Status**: Planned
+- **Description**: Add interactive git branch diagrams to the dashboard showing commit history and branch relationships across repos (especially local-bootstrapping)
+- **Purpose**: Visual representation of development history for personal projects
+- **Inspiration**: Keep feature branches (staging, fix/*, etc.) for meaningful visualization rather than deleting them after merge
+
+---
+
 *For detailed roadmap and future plans, refer to the internal `progress_actual.md`.*

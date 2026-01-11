@@ -12,7 +12,15 @@ type Summary = {
   total_lines_updated: number
   repos_updated_count: number
   last_checked_at: string | null
-  per_repo: { id: number, full_name: string, commits_count: number, is_private: boolean }[]
+  per_repo: {
+    id: number
+    full_name: string
+    commits_count: number
+    is_private: boolean
+    additions: number
+    deletions: number
+    changed_files: number
+  }[]
 }
 
 export default function HomePage() {
@@ -166,19 +174,53 @@ export default function HomePage() {
       </section>
 
       <section className="grid md:grid-cols-2 gap-4">
-        {data?.per_repo?.map(r => (
-          <a key={r.id} href={`/repo/${r.id}`} className="ink-panel p-4 block hover:-translate-y-0.5 transition-transform">
-            <div className="flex items-center justify-between">
-              <div className="font-semibold flex items-center gap-2">
-                <span>{r.full_name}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-black/70" style={{borderWidth:2, background:'white'}}>
-                  {r.is_private ? 'private' : 'public'}
-                </span>
+        {data?.per_repo?.map(r => {
+          const totalLines = r.additions + r.deletions
+          const linesPerCommit = r.commits_count > 0
+            ? Math.round(totalLines / r.commits_count)
+            : 0
+          return (
+            <a key={r.id} href={`/repo/${r.id}`} className="ink-panel p-4 pr-6 block hover:-translate-y-0.5 transition-transform relative">
+              <div className="flex items-center gap-3">
+                {/* Repo name and badge */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold flex items-center gap-2 truncate">
+                    <span className="truncate">{r.full_name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-black/70 flex-shrink-0" style={{borderWidth:2, background:'white'}}>
+                      {r.is_private ? 'private' : 'public'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Files with +/- stacked around it */}
+                <div className="flex-shrink-0 flex items-center gap-1">
+                  <div className="flex flex-col items-end font-mono text-xs font-bold leading-tight">
+                    <span className="additions-color">+{r.additions}</span>
+                    <span className="deletions-color">−{r.deletions}</span>
+                  </div>
+                  <div className="text-sm opacity-50 font-light">
+                    {r.changed_files} {r.changed_files === 1 ? 'file' : 'files'}
+                  </div>
+                </div>
+
+                {/* Total lines */}
+                <div className="flex-shrink-0 text-sm">
+                  {totalLines} <span className="opacity-50">lines</span>
+                </div>
+
+                {/* Commits (larger) */}
+                <div className="text-3xl font-bold flex-shrink-0 min-w-[2.5rem] text-right">
+                  {r.commits_count}
+                </div>
               </div>
-              <div className="text-lg">{r.commits_count}</div>
-            </div>
-          </a>
-        ))}
+
+              {/* Lines per commit - slightly larger, bold */}
+              <div className="absolute bottom-1 right-3 text-[7pt] opacity-50 font-mono font-bold">
+                {linesPerCommit} l/c
+              </div>
+            </a>
+          )
+        })}
       </section>
       {error && <div className="text-red-700">Error loading data</div>}
     </main>

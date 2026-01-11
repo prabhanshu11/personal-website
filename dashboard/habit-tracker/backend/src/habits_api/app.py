@@ -70,34 +70,51 @@ async def summary(window: str = Query("24h"), session: AsyncSession = Depends(ge
     since = dt.datetime.now(dt.timezone.utc) - dt.timedelta(seconds=w.seconds)
 
     # per-repo counts
-    # Aggregate commits and lines updated per repo within window
-    lines_expr = (func.coalesce(func.sum(Commit.additions), 0) + func.coalesce(func.sum(Commit.deletions), 0)).label("lines")
+    # Aggregate commits, lines, and files updated per repo within window
+    adds_expr = func.coalesce(func.sum(Commit.additions), 0).label("additions")
+    dels_expr = func.coalesce(func.sum(Commit.deletions), 0).label("deletions")
+    files_expr = func.coalesce(func.sum(Commit.changed_files), 0).label("changed_files")
     subq = (
         select(
             Commit.repo_id.label("repo_id"),
             func.count(Commit.id).label("count"),
-            lines_expr,
+            adds_expr,
+            dels_expr,
+            files_expr,
         )
         .where(Commit.committed_at >= since)
         .group_by(Commit.repo_id)
         .subquery()
     )
 
-    res = await session.execute(select(Repository, subq.c.count, subq.c.lines).join(subq, Repository.id == subq.c.repo_id, isouter=True))
+    res = await session.execute(
+        select(Repository, subq.c.count, subq.c.additions, subq.c.deletions, subq.c.changed_files)
+        .join(subq, Repository.id == subq.c.repo_id, isouter=True)
+    )
     rows = res.all()
     per_repo = []
     total_commits = 0
     total_lines = 0
     last_checked = None
     repos_list = []
-    for repo, count, lines in rows:
+    for repo, count, additions, deletions, changed_files in rows:
         c = int(count or 0)
-        l = int(lines or 0)
+        a = int(additions or 0)
+        d = int(deletions or 0)
+        f = int(changed_files or 0)
         total_commits += c
-        total_lines += l
+        total_lines += a + d
         if not last_checked or (repo.last_checked_at and repo.last_checked_at > last_checked):
             last_checked = repo.last_checked_at
-        per_repo.append(SummaryRepo(id=repo.id, full_name=repo.full_name, commits_count=c, is_private=repo.is_private))
+        per_repo.append(SummaryRepo(
+            id=repo.id,
+            full_name=repo.full_name,
+            commits_count=c,
+            is_private=repo.is_private,
+            additions=a,
+            deletions=d,
+            changed_files=f,
+        ))
         repos_list.append(repo)
 
     # Repos updated count: number of repos successfully checked in the latest ingest run
