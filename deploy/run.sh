@@ -77,24 +77,19 @@ REPO_NGINX_CONF="deploy/nginx/personal-website.conf"
 # Always backup existing config with timestamp
 sudo cp "$NGINX_CONF" "${NGINX_CONF}.bak.$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
 
-# Check if nginx config has outdated dashboard routes (with trailing slash)
-if grep -q "location /dashboard/habits/" "$NGINX_CONF" 2>/dev/null; then
-    echo "📝 Detected old nginx config (trailing slash) - updating..."
-    # Copy new config
-    sudo cp "$REPO_NGINX_CONF" "$NGINX_CONF"
-    # Re-run certbot to add SSL if needed (non-interactive)
-    sudo certbot --nginx -d prabhanshu.space -d www.prabhanshu.space --non-interactive --agree-tos --redirect || true
-    sudo nginx -t && sudo systemctl reload nginx
-    echo "✅ Nginx config updated and reloaded"
-elif ! grep -q "dashboard/habits" "$NGINX_CONF" 2>/dev/null; then
-    echo "📝 Dashboard routes not found - adding..."
-    sudo cp "$REPO_NGINX_CONF" "$NGINX_CONF"
-    sudo certbot --nginx -d prabhanshu.space -d www.prabhanshu.space --non-interactive --agree-tos --redirect || true
-    sudo nginx -t && sudo systemctl reload nginx
-    echo "✅ Nginx config updated with dashboard routes"
+# Always copy repo config and re-apply certbot SSL
+# This ensures new routes (like /vm) are always picked up
+# and certbot --reinstall re-adds SSL directives after config copy
+sudo cp "$REPO_NGINX_CONF" "$NGINX_CONF"
+
+if [ -f /etc/letsencrypt/live/prabhanshu.space/fullchain.pem ]; then
+    sudo certbot --nginx -d prabhanshu.space -d www.prabhanshu.space --reinstall --redirect --non-interactive || true
 else
-    echo "✅ Nginx config is already up to date"
+    sudo certbot --nginx -d prabhanshu.space -d www.prabhanshu.space --non-interactive --agree-tos --redirect || true
 fi
+
+sudo nginx -t && sudo systemctl reload nginx
+echo "✅ Nginx config updated and reloaded"
 
 # ==========================================
 # HEALTH CHECKS
