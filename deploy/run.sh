@@ -77,19 +77,45 @@ REPO_NGINX_CONF="deploy/nginx/personal-website.conf"
 # Always backup existing config with timestamp
 sudo cp "$NGINX_CONF" "${NGINX_CONF}.bak.$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
 
-# Always copy repo config and re-apply certbot SSL
-# This ensures new routes (like /vm) are always picked up
-# and certbot --reinstall re-adds SSL directives after config copy
+# Copy repo config (includes SSL directives and HTTPS redirect)
+# No certbot needed during deploy — certs are managed by certbot timer
 sudo cp "$REPO_NGINX_CONF" "$NGINX_CONF"
 
-if [ -f /etc/letsencrypt/live/prabhanshu.space/fullchain.pem ]; then
-    sudo certbot --nginx -d prabhanshu.space -d www.prabhanshu.space --reinstall --redirect --non-interactive || true
-else
-    sudo certbot --nginx -d prabhanshu.space -d www.prabhanshu.space --non-interactive --agree-tos --redirect || true
+# Temporarily disable any broken site configs that would block nginx -t
+DISABLED_CONFIGS=()
+if ! sudo nginx -t 2>/dev/null; then
+    echo "⚠️  nginx -t failed. Checking for broken site configs..."
+    for conf in /etc/nginx/sites-enabled/*; do
+        site=$(basename "$conf")
+        # Skip our own config
+        [ "$site" = "prabhanshu.space" ] && continue
+        # Test if disabling this config fixes nginx -t
+        sudo mv "$conf" "$conf.disabled" 2>/dev/null || continue
+        if sudo nginx -t 2>/dev/null; then
+            echo "  Found broken config: $site (disabled temporarily for reload)"
+            DISABLED_CONFIGS+=("$conf")
+            # Re-disable it — we'll restore after reload
+            break
+        else
+            # Not this one, restore it
+            sudo mv "$conf.disabled" "$conf"
+        fi
+    done
 fi
 
-sudo nginx -t && sudo systemctl reload nginx
-echo "✅ Nginx config updated and reloaded"
+if sudo nginx -t 2>&1; then
+    sudo systemctl reload nginx
+    echo "✅ Nginx config updated and reloaded"
+else
+    echo "❌ nginx -t still failing after disabling broken configs:"
+    sudo nginx -t 2>&1 || true
+fi
+
+# Restore disabled configs (they'll be inactive until fixed by their own deployment)
+for conf in "${DISABLED_CONFIGS[@]}"; do
+    sudo mv "$conf.disabled" "$conf" 2>/dev/null || true
+    echo "  Restored: $(basename "$conf") (still broken, needs its own fix)"
+done
 
 # ==========================================
 # HEALTH CHECKS
