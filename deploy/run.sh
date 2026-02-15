@@ -81,24 +81,22 @@ sudo cp "$NGINX_CONF" "${NGINX_CONF}.bak.$(date +%Y%m%d_%H%M%S)" 2>/dev/null || 
 # No certbot needed during deploy — certs are managed by certbot timer
 sudo cp "$REPO_NGINX_CONF" "$NGINX_CONF"
 
-# Temporarily disable any broken site configs that would block nginx -t
-DISABLED_CONFIGS=()
+# If nginx -t fails, temporarily disable broken sibling site configs
+# (remove symlink from sites-enabled, re-create after reload)
+DISABLED_SITES=""
 if ! sudo nginx -t 2>/dev/null; then
-    echo "⚠️  nginx -t failed. Checking for broken site configs..."
+    echo "⚠️  nginx -t failed. Isolating broken site configs..."
     for conf in /etc/nginx/sites-enabled/*; do
-        site=$(basename "$conf")
-        # Skip our own config
+        site="$(basename "$conf")"
         [ "$site" = "prabhanshu.space" ] && continue
-        # Test if disabling this config fixes nginx -t
-        sudo mv "$conf" "$conf.disabled" 2>/dev/null || continue
+        target="$(readlink -f "$conf")"
+        sudo rm "$conf"
         if sudo nginx -t 2>/dev/null; then
-            echo "  Found broken config: $site (disabled temporarily for reload)"
-            DISABLED_CONFIGS+=("$conf")
-            # Re-disable it — we'll restore after reload
-            break
+            echo "  Isolated broken config: $site"
+            DISABLED_SITES="$DISABLED_SITES $conf=$target"
         else
-            # Not this one, restore it
-            sudo mv "$conf.disabled" "$conf"
+            # Not this one, restore symlink
+            sudo ln -s "$target" "$conf"
         fi
     done
 fi
@@ -107,14 +105,16 @@ if sudo nginx -t 2>&1; then
     sudo systemctl reload nginx
     echo "✅ Nginx config updated and reloaded"
 else
-    echo "❌ nginx -t still failing after disabling broken configs:"
+    echo "❌ nginx -t still failing:"
     sudo nginx -t 2>&1 || true
 fi
 
-# Restore disabled configs (they'll be inactive until fixed by their own deployment)
-for conf in "${DISABLED_CONFIGS[@]}"; do
-    sudo mv "$conf.disabled" "$conf" 2>/dev/null || true
-    echo "  Restored: $(basename "$conf") (still broken, needs its own fix)"
+# Restore disabled symlinks (sites stay broken until their own deploy fixes them)
+for entry in $DISABLED_SITES; do
+    conf="${entry%%=*}"
+    target="${entry##*=}"
+    sudo ln -s "$target" "$conf" 2>/dev/null || true
+    echo "  Restored symlink: $(basename "$conf") (still broken, needs its own fix)"
 done
 
 # ==========================================
