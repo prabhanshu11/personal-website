@@ -94,6 +94,7 @@ if ! sudo nginx -t 2>/dev/null; then
         if sudo nginx -t 2>/dev/null; then
             echo "  Isolated broken config: $site"
             DISABLED_SITES="$DISABLED_SITES $conf=$target"
+            break  # nginx -t passes now, stop removing configs
         else
             # Not this one, restore symlink
             sudo ln -s "$target" "$conf"
@@ -102,8 +103,13 @@ if ! sudo nginx -t 2>/dev/null; then
 fi
 
 if sudo nginx -t 2>&1; then
-    sudo systemctl reload nginx
-    echo "✅ Nginx config updated and reloaded"
+    if sudo systemctl is-active nginx >/dev/null 2>&1; then
+        sudo systemctl reload nginx
+        echo "✅ Nginx config reloaded"
+    else
+        sudo systemctl start nginx
+        echo "✅ Nginx started (was not running)"
+    fi
 else
     echo "❌ nginx -t still failing:"
     sudo nginx -t 2>&1 || true
