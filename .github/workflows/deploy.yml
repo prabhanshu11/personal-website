@@ -20,7 +20,11 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy via SSH
+      - name: Pull latest code
+        run: |
+          ssh ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/prabhanshu.space && git fetch origin main && git reset --hard origin/main"
+
+      - name: Deploy
         env:
           HABITS_GITHUB_TOKEN: ${{ secrets.HABITS_GITHUB_TOKEN }}
         run: |

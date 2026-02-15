@@ -10,9 +10,9 @@ echo "🚀 Starting Docker deployment..."
 # Navigate to project directory
 cd /var/www/prabhanshu.space
 
-# Pull latest changes from GitHub
-echo "📥 Pulling latest changes from GitHub..."
-git pull origin main
+# Note: git pull is handled by the CI workflow (deploy.yml) BEFORE
+# running this script, to avoid the self-modifying script problem
+# where bash reads the old script from memory after git pull updates it.
 
 # ==========================================
 # MAIN WEBSITE
