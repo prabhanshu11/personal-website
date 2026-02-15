@@ -370,6 +370,7 @@ def my_zone(session):
             # Application Stats / Links
             Div(
                 A("📧 Newsletter Subscribers", href="/myzone/newsletter", cls="btn", style="background: #eef; color: #333; border: 1px solid #ccd; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 1rem;"),
+                A("Admin Dashboard", href="/myzone/admin", cls="btn", style="background: #fee; color: #333; border: 1px solid #dca; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 1rem; margin-left: 0.5rem;") if auth.is_admin(session) else "",
                 style="margin-bottom: 1rem;"
             ),
 
@@ -505,6 +506,132 @@ def delete_subscriber(id: int, session):
     db.delete_subscriber(id)
     # Redirect back to the list to refresh the page
     return RedirectResponse("/myzone/newsletter", status_code=303)
+
+
+# ==========================================
+# ADMIN DASHBOARD (owner-only)
+# ==========================================
+
+ADMIN_STYLES = Style('''
+    .admin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    .admin-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1.25rem;
+        background: #fafafa;
+    }
+    .admin-card h3 { margin-top: 0; }
+    .status-dot {
+        display: inline-block;
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        margin-right: 0.4rem;
+        vertical-align: middle;
+    }
+    .status-up   { background: #22c55e; }
+    .status-down { background: #ef4444; }
+    .status-unknown { background: #a3a3a3; }
+''')
+
+@app.get("/myzone/admin")
+def admin_dashboard(session):
+    if not auth.check_auth(session):
+        return RedirectResponse("/login", status_code=303)
+    if not auth.is_admin(session):
+        return HTMLResponse(
+            to_xml(create_layout(
+                "Forbidden",
+                Header(H1("403 - Forbidden")),
+                Section(P("You do not have admin access."),
+                        P(A("← Back to My Zone", href="/myzone")))
+            )),
+            status_code=403
+        )
+
+    vm_monitor_url = "http://localhost:8082" if DEBUG else "/dashboard/vm-monitor"
+
+    return Html(
+        Head(
+            Title("Admin Dashboard - Prabhanshu"),
+            Meta(name="viewport", content="width=device-width, initial-scale=1"),
+            GLOBAL_STYLES,
+            ADMIN_STYLES,
+            Script(src="https://unpkg.com/htmx.org@1.9.10"),
+        ),
+        Body(
+            Div(
+                Header(
+                    H1("Admin Dashboard"),
+                    P("System monitors and admin tools", cls="subtitle"),
+                    Div(
+                        A("← My Zone", href="/myzone", cls="btn", style="font-size: 0.9em;"),
+                        A("Logout", href="/logout", cls="btn", style="font-size: 0.8em; margin-left: 1rem;"),
+                    )
+                ),
+                Section(
+                    H2("Services"),
+                    Div(
+                        # VM Uptime Monitor card
+                        Div(
+                            H3("Windows VM"),
+                            Div(
+                                Span(cls="status-dot status-unknown"),
+                                Span("Loading...", id="vm-status-text"),
+                                style="margin-bottom: 0.75rem;"
+                            ),
+                            P(
+                                Span("Machine: ", style="font-weight: bold;"),
+                                Span("—", id="vm-machine-status"),
+                            ),
+                            P(
+                                Span("noVNC Tunnel: ", style="font-weight: bold;"),
+                                Span("—", id="vm-tunnel-status"),
+                            ),
+                            P(
+                                Span("Last checked: ", style="color: #888;"),
+                                Span("—", id="vm-last-check"),
+                            ),
+                            Div(
+                                A("Open noVNC", href="/vm/", cls="btn",
+                                  style="font-size: 0.85em; text-decoration: none; border: 1px solid #ccc; padding: 0.3rem 0.8rem; border-radius: 4px; background: #f0f0f0; color: #333;"),
+                                style="margin-top: 0.75rem;"
+                            ),
+                            cls="admin-card"
+                        ),
+                        cls="admin-grid"
+                    )
+                ),
+                Script(f'''
+                    async function fetchVmStatus() {{
+                        try {{
+                            const resp = await fetch("{vm_monitor_url}/status");
+                            if (!resp.ok) throw new Error("HTTP " + resp.status);
+                            const d = await resp.json();
+                            const dot = document.querySelector(".status-dot");
+                            const overall = d.vm_up && d.tunnel_up;
+                            dot.className = "status-dot " + (overall ? "status-up" : "status-down");
+                            document.getElementById("vm-status-text").textContent = overall ? "Online" : "Degraded";
+                            document.getElementById("vm-machine-status").textContent = d.vm_up ? "Up" : "Down";
+                            document.getElementById("vm-tunnel-status").textContent = d.tunnel_up ? "Up" : "Down";
+                            document.getElementById("vm-last-check").textContent = d.checked_at || "—";
+                        }} catch(e) {{
+                            document.querySelector(".status-dot").className = "status-dot status-unknown";
+                            document.getElementById("vm-status-text").textContent = "Monitor unavailable";
+                        }}
+                    }}
+                    fetchVmStatus();
+                    setInterval(fetchVmStatus, 30000);
+                '''),
+                cls="container"
+            ),
+        ),
+        lang="en"
+    )
 
 
 # Custom 404 handler

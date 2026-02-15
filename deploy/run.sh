@@ -148,4 +148,12 @@ else
     docker logs dashboard-habit-frontend 2>/dev/null || true
 fi
 
+echo "🔍 Testing VM monitor..."
+if curl -f http://localhost:8082/health > /dev/null 2>&1; then
+    echo "✅ VM monitor is healthy!"
+else
+    echo "⚠️  VM monitor not responding (may need Tailscale for full functionality)"
+    docker logs dashboard-vm-monitor 2>/dev/null || true
+fi
+
 echo "🎉 Docker deployment completed successfully!"

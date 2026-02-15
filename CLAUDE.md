@@ -10,8 +10,10 @@
 ### Components
 | Component | URL | Technology | Port |
 |-----------|-----|------------|------|
-| Main Site | https://prabhanshu.space/ | Flask (Docker) | 5000 |
-| Dashboard | https://prabhanshu.space/dashboard/* | Next.js + FastAPI | 3000/8000 |
+| Main Site | https://prabhanshu.space/ | FastHTML (Docker) | 8000 |
+| Habit Tracker | https://prabhanshu.space/dashboard/* | Next.js + FastAPI | 5173/8081 |
+| VM Monitor | https://prabhanshu.space/dashboard/vm-monitor/* | FastAPI | 8082 |
+| Admin Dashboard | https://prabhanshu.space/myzone/admin | FastHTML (main app) | 8000 |
 
 ### Directory Structure on VPS
 ```
@@ -19,10 +21,11 @@
 ├── app.py              # Flask main app
 ├── templates/          # Jinja2 templates
 ├── static/             # Static assets
-├── dashboard/          # Habit tracker (Next.js + FastAPI)
+├── dashboard/          # Dashboard services (Docker Compose)
 │   ├── habit-tracker/
 │   │   ├── web/        # Next.js frontend
 │   │   └── backend/    # FastAPI backend
+│   ├── vm-monitor/     # VM uptime monitor (FastAPI + SQLite)
 │   └── docker-compose.yml
 ├── deploy/             # Deployment scripts
 │   ├── run.sh          # Main deployment script
@@ -98,6 +101,33 @@ When making changes that affect:
 - 7d metrics view available
 - Git commit integration for habit tracking
 
+## Admin Dashboard
+
+### Access Control
+- Route: `/myzone/admin` — gated by `auth.is_admin(session)`
+- Only `prabhanshu11` (ALLOWED_USER) can access
+- Non-admin authenticated users get 403
+- `is_admin()` is separate from `check_auth()` — when multi-user auth lands, `check_auth()` will allow any user, `is_admin()` stays owner-only
+
+### VM Uptime Monitor
+- **Service**: `dashboard/vm-monitor/monitor.py` (FastAPI)
+- **Port**: 8082 (host network mode in Docker)
+- **Nginx**: `/dashboard/vm-monitor/` proxies to `localhost:8082`
+- **Checks**: Tailscale ping (VM up?) + HTTP probe on `:9006` (noVNC tunnel up?)
+- **Storage**: SQLite in Docker volume `vm_monitor_data`
+- **API**:
+  - `GET /status` — latest check result
+  - `GET /history?hours=24` — historical data
+  - `GET /health` — service health
+- **Config** (env vars): `POLL_INTERVAL`, `TUNNEL_HOST`, `TUNNEL_PORT`, `VM_TAILSCALE_IP`
+
+### Adding New Admin Widgets
+1. Create service in `dashboard/<widget-name>/`
+2. Add to `dashboard/docker-compose.yml`
+3. Add nginx proxy route in `deploy/nginx/personal-website.conf`
+4. Add health check in `deploy/run.sh`
+5. Add widget card in the `admin_dashboard()` route in `website/app.py`
+
 ## Authentication
 
 ### My Zone (OAuth)
@@ -109,10 +139,12 @@ When making changes that affect:
 
 | File | Purpose |
 |------|---------|
-| `app.py` | Main Flask application |
+| `website/app.py` | Main FastHTML application (includes admin dashboard route) |
+| `website/auth.py` | Auth logic: `check_auth()`, `is_admin()`, OAuth flow |
 | `deploy/run.sh` | Deployment script |
-| `deploy/nginx/` | nginx configurations |
-| `dashboard/docker-compose.yml` | Dashboard services |
+| `deploy/nginx/personal-website.conf` | nginx configuration |
+| `dashboard/docker-compose.yml` | Dashboard services (habit-tracker + vm-monitor) |
+| `dashboard/vm-monitor/monitor.py` | VM uptime monitor service |
 | `.github/workflows/deploy.yml` | CI/CD workflow |
 
 ## Debugging

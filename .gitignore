@@ -25,6 +25,7 @@ wheels/
 .venv/
 uv.lock
 !dashboard/habit-tracker/backend/uv.lock
+!dashboard/vm-monitor/uv.lock
 .python-version
 
 # Environment

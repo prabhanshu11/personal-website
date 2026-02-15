@@ -36,5 +36,27 @@ services:
     depends_on:
       - habit-backend
 
+  vm-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.vm-monitor
+    container_name: dashboard-vm-monitor
+    restart: always
+    network_mode: host
+    environment:
+      - POLL_INTERVAL=${VM_POLL_INTERVAL:-60}
+      - TUNNEL_HOST=127.0.0.1
+      - TUNNEL_PORT=9006
+      - VM_TAILSCALE_IP=${VM_TAILSCALE_IP:-}
+      - DB_PATH=/app/data/vm-monitor.db
+    volumes:
+      - vm_monitor_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   habit_data:
+  vm_monitor_data:

@@ -99,3 +99,12 @@ def requires_auth(func):
 # Better approach for FastHTML: Check session in the route
 def check_auth(session):
     return session.get("user") == ALLOWED_USER
+
+def is_admin(session):
+    """Check if the logged-in user is the site owner (admin).
+
+    Separate from check_auth() — when multi-user accounts land,
+    check_auth() will allow any authenticated user, but is_admin()
+    stays restricted to ALLOWED_USER for admin-only dashboards.
+    """
+    return session.get("user") == ALLOWED_USER
