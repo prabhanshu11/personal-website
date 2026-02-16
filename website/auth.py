@@ -1,6 +1,7 @@
 import os
 import httpx
 from fasthtml.common import *
+from starlette.responses import Response
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -14,12 +15,13 @@ ALLOWED_USER = "prabhanshu11"  # Restrict access to this GitHub user
 def get_github_auth_url():
     return f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&scope=read:user"
 
-def login_page():
+def login_page(next: str = ""):
+    # Pass next param through to the login link
+    login_href = f"/auth/github/login?next={next}" if next else "/auth/github/login"
     return Html(
         Head(
             Title("Login - My Zone"),
             Meta(name="viewport", content="width=device-width, initial-scale=1"),
-            # Reusing global styles from app.py would be ideal, but for now we'll just add basic styling
             Style('''
                 body { font-family: serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f5f5f5; }
                 .login-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
@@ -32,21 +34,24 @@ def login_page():
             Div(
                 H1("My Zone Login"),
                 P("Restricted access area."),
-                A("Login with GitHub", href="/auth/github/login", cls="btn-github"),
+                A("Login with GitHub", href=login_href, cls="btn-github"),
                 cls="login-card"
             )
         )
     )
 
-async def github_login(req):
+async def github_login(req, session, next: str = ""):
     if not GITHUB_CLIENT_ID:
         return Titled("Error", P("GitHub Client ID not configured."))
+    # Store the redirect target in session so we can use it after OAuth callback
+    if next:
+        session["login_next"] = next
     return RedirectResponse(get_github_auth_url())
 
 async def github_callback(code: str, req, session):
     if not code:
         return Titled("Error", P("No code provided."))
-    
+
     async with httpx.AsyncClient() as client:
         # Exchange code for access token
         token_resp = await client.post(
@@ -60,10 +65,10 @@ async def github_callback(code: str, req, session):
         )
         token_data = token_resp.json()
         access_token = token_data.get("access_token")
-        
+
         if not access_token:
             return Titled("Error", P("Failed to get access token."))
-        
+
         # Get user info
         user_resp = await client.get(
             "https://api.github.com/user",
@@ -74,13 +79,15 @@ async def github_callback(code: str, req, session):
         )
         user_data = user_resp.json()
         username = user_data.get("login")
-        
+
         if username != ALLOWED_USER:
             return Titled("Unauthorized", P(f"User '{username}' is not allowed to access this area."))
-        
+
         # Set session
         session["user"] = username
-        return RedirectResponse("/myzone", status_code=303)
+        # Redirect to the original page if one was saved, otherwise /myzone
+        redirect_to = session.pop("login_next", "/myzone")
+        return RedirectResponse(redirect_to, status_code=303)
 
 def logout(session):
     session.clear()
@@ -99,3 +106,9 @@ def requires_auth(func):
 # Better approach for FastHTML: Check session in the route
 def check_auth(session):
     return session.get("user") == ALLOWED_USER
+
+async def auth_check(session):
+    """nginx auth_request endpoint — returns 200 if authenticated, 401 if not."""
+    if check_auth(session):
+        return Response(status_code=200)
+    return Response(status_code=401)

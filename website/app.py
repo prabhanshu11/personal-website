@@ -347,6 +347,7 @@ def about():
 app.get("/login")(auth.login_page)
 app.get("/auth/github/login")(auth.github_login)
 app.get("/auth/callback")(auth.github_callback)
+app.get("/auth/check")(auth.auth_check)
 app.get("/logout")(auth.logout)
 
 @app.get("/myzone")
