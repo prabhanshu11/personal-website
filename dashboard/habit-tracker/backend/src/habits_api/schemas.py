@@ -67,3 +67,24 @@ class CommitDetail(CommitOut):
     full_name: str
     is_private: bool
     files: List[CommitFileOut]
+
+
+class RepoCommitActivity(BaseModel):
+    repo_id: int
+    repo_name: str
+    count: int
+    total_lines: int
+
+
+class TimeSeriesDataPoint(BaseModel):
+    timestamp: dt.datetime
+    additions: int
+    deletions: int
+    total_activity: int
+    commits_by_repo: List[RepoCommitActivity]
+
+
+class TimeSeriesOut(BaseModel):
+    window: str
+    granularity: str
+    data_points: List[TimeSeriesDataPoint]

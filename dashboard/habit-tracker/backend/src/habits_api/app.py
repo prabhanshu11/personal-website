@@ -6,13 +6,13 @@ from typing import List, Optional
 import logging
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import Window, get_settings
 from .db import Commit, Repository, get_session, init_db, SessionLocal, CommitFile
 from .ingest import ingest_all, start_scheduler, ensure_commit_files
-from .schemas import CommitOut, RepoMetrics, RepoOut, SummaryOut, SummaryRepo, CommitFileOut, CommitDetail
+from .schemas import CommitOut, RepoMetrics, RepoOut, SummaryOut, SummaryRepo, CommitFileOut, CommitDetail, TimeSeriesOut, TimeSeriesDataPoint, RepoCommitActivity
 
 app = FastAPI(title="Habit Tracker — Git Commits")
 log = logging.getLogger("habits_api")
@@ -148,6 +148,126 @@ async def summary(window: str = Query("24h"), session: AsyncSession = Depends(ge
         },
     )
     return out
+
+
+@app.get("/metrics/timeseries", response_model=TimeSeriesOut)
+async def timeseries(
+    window: str = Query("1M"),
+    granularity: str = Query("day"),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Return time-series data for iceberg chart visualization.
+
+    Granularity options: hour, day, week, month
+    Window options: 6h, 24h, 48h, 7d, 1W, 1M, 1Y, 5Y
+    """
+    w = Window.from_str(window)
+    since = dt.datetime.now(dt.timezone.utc) - dt.timedelta(seconds=w.seconds)
+
+    # Determine SQL time bucketing based on granularity
+    # SQLite doesn't have date_trunc, so we use different approach
+    granularity_map = {
+        "hour": "strftime('%Y-%m-%d %H:00:00', committed_at)",
+        "day": "date(committed_at)",
+        "week": "strftime('%Y-W%W', committed_at)",
+        "month": "strftime('%Y-%m', committed_at)",
+    }
+
+    if granularity not in granularity_map:
+        granularity = "day"
+
+    time_bucket_expr = granularity_map[granularity]
+
+    # Query: Get commits grouped by time bucket and repo
+    # Use raw SQL for time bucketing (SQLite-specific)
+    query = f"""
+        SELECT
+            {time_bucket_expr} as time_bucket,
+            c.repo_id,
+            r.full_name,
+            COUNT(c.id) as commit_count,
+            COALESCE(SUM(c.additions), 0) as total_additions,
+            COALESCE(SUM(c.deletions), 0) as total_deletions
+        FROM commits c
+        JOIN repositories r ON c.repo_id = r.id
+        WHERE c.committed_at >= :since
+        GROUP BY time_bucket, c.repo_id, r.full_name
+        ORDER BY time_bucket ASC
+    """
+
+    result = await session.execute(text(query), {"since": since})
+    rows = result.fetchall()
+
+    # Group results by time bucket
+    bucket_data = {}
+    for row in rows:
+        time_bucket, repo_id, repo_name, commit_count, additions, deletions = row
+
+        if time_bucket not in bucket_data:
+            bucket_data[time_bucket] = {
+                "additions": 0,
+                "deletions": 0,
+                "commits_by_repo": []
+            }
+
+        bucket_data[time_bucket]["additions"] += int(additions or 0)
+        bucket_data[time_bucket]["deletions"] += int(deletions or 0)
+        bucket_data[time_bucket]["commits_by_repo"].append(
+            RepoCommitActivity(
+                repo_id=repo_id,
+                repo_name=repo_name,
+                count=int(commit_count or 0),
+                total_lines=int(additions or 0) + int(deletions or 0)
+            )
+        )
+
+    # Convert to TimeSeriesDataPoint list
+    data_points = []
+    for time_bucket, data in sorted(bucket_data.items()):
+        # Parse timestamp based on granularity format
+        try:
+            if granularity == "hour":
+                timestamp = dt.datetime.strptime(time_bucket, "%Y-%m-%d %H:%M:%S")
+            elif granularity == "day":
+                timestamp = dt.datetime.strptime(time_bucket, "%Y-%m-%d")
+            elif granularity == "week":
+                # Week format: 2026-W02
+                year_week = time_bucket.split("-W")
+                timestamp = dt.datetime.strptime(f"{year_week[0]}-W{year_week[1]}-1", "%Y-W%W-%w")
+            elif granularity == "month":
+                timestamp = dt.datetime.strptime(time_bucket, "%Y-%m")
+            else:
+                timestamp = dt.datetime.strptime(time_bucket, "%Y-%m-%d")
+
+            # Ensure timezone aware
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=dt.timezone.utc)
+
+        except ValueError:
+            continue
+
+        data_points.append(
+            TimeSeriesDataPoint(
+                timestamp=timestamp,
+                additions=data["additions"],
+                deletions=data["deletions"],
+                total_activity=data["additions"] + data["deletions"],
+                commits_by_repo=data["commits_by_repo"]
+            )
+        )
+
+    # Limit to max 100 data points (prevent response bloat)
+    if len(data_points) > 100:
+        # Sample evenly
+        step = len(data_points) // 100
+        data_points = data_points[::step][:100]
+
+    return TimeSeriesOut(
+        window=w.value,
+        granularity=granularity,
+        data_points=data_points
+    )
 
 
 @app.get("/repos/{repo_id}/metrics", response_model=RepoMetrics)
