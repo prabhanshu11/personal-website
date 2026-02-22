@@ -52,6 +52,13 @@ SCHEDULER_INTERVAL_MINUTES=15
 
 # Frontend (built into the image, not runtime)
 # NEXT_PUBLIC_API_BASE=/dashboard/api
+
+# Finance Dashboard
+TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+TELEGRAM_HIGH_VALUE_THRESHOLD=5000
+FINANCE_SCHEDULER_ENABLED=true
+FINANCE_POLL_INTERVAL=120
 EOF
 
 if [ "$HABITS_GITHUB_TOKEN" = "" ] || [ "$HABITS_GITHUB_TOKEN" = "ghp_placeholder_token" ]; then
@@ -154,6 +161,22 @@ if curl -f http://localhost:8082/health > /dev/null 2>&1; then
 else
     echo "⚠️  VM monitor not responding (may need Tailscale for full functionality)"
     docker logs dashboard-vm-monitor 2>/dev/null || true
+fi
+
+echo "🔍 Testing finance backend..."
+if curl -f http://localhost:8083/health > /dev/null 2>&1; then
+    echo "✅ Finance backend is healthy!"
+else
+    echo "⚠️  Finance backend not responding (may need Gmail credentials)"
+    docker logs dashboard-finance-backend 2>/dev/null || true
+fi
+
+echo "🔍 Testing finance frontend..."
+if curl -f http://localhost:5174/dashboard/finance > /dev/null 2>&1; then
+    echo "✅ Finance frontend is healthy!"
+else
+    echo "⚠️  Finance frontend not responding"
+    docker logs dashboard-finance-frontend 2>/dev/null || true
 fi
 
 echo "🎉 Docker deployment completed successfully!"

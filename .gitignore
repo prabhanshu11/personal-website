@@ -26,6 +26,7 @@ wheels/
 uv.lock
 !dashboard/habit-tracker/backend/uv.lock
 !dashboard/vm-monitor/uv.lock
+!dashboard/finance/backend/uv.lock
 .python-version
 
 # Environment
@@ -75,3 +76,9 @@ dashboard/habit-tracker/web/node_modules/
 dashboard/habit-tracker/web/.next/
 dashboard/habit-tracker/backend/*.db
 dashboard/habit-tracker/backend/__pycache__/
+
+# Finance dashboard build artifacts
+dashboard/finance/web/node_modules/
+dashboard/finance/web/.next/
+dashboard/finance/backend/.venv/
+dashboard/finance/backend/data/

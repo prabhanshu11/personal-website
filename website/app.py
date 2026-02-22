@@ -356,6 +356,7 @@ def my_zone(session):
 
     # Use direct URL for local dev, proxied path for production
     habit_tracker_url = "http://localhost:5173" if DEBUG else "/dashboard/habits"
+    finance_url = "http://localhost:5174" if DEBUG else "/dashboard/finance"
 
     return create_layout(
         "My Zone",
@@ -372,6 +373,17 @@ def my_zone(session):
                 A("📧 Newsletter Subscribers", href="/myzone/newsletter", cls="btn", style="background: #eef; color: #333; border: 1px solid #ccd; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 1rem;"),
                 A("Admin Dashboard", href="/myzone/admin", cls="btn", style="background: #fee; color: #333; border: 1px solid #dca; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 1rem; margin-left: 0.5rem;") if auth.is_admin(session) else "",
                 style="margin-bottom: 1rem;"
+            ),
+
+            # Financial Dashboard
+            Div(
+                H3("Finance"),
+                Iframe(
+                    src=finance_url,
+                    style="width: 100%; height: 700px; border: 2px solid #ccc; border-radius: 8px;",
+                    title="Finance Dashboard"
+                ),
+                style="margin-bottom: 2rem;"
             ),
 
             # Habit Tracker Dashboard
