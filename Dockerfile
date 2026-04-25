@@ -1,8 +1,9 @@
 # Use Python 3.12 slim image
 FROM python:3.12-slim
 
-# Install UV
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+# Install UV (docker.io mirror — ghcr.io/astral-sh started returning
+# `denied` on anonymous pulls from the VPS as of 2026-04-25)
+COPY --from=docker.io/astral/uv:latest /uv /bin/uv
 
 # Set working directory
 WORKDIR /app
