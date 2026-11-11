@@ -124,6 +124,14 @@ for entry in $DISABLED_SITES; do
 done
 
 # ==========================================
+# PRIVATE APPS (optional, never fails this deploy)
+# ==========================================
+# Separate process with its own error handling; its exit code is ignored so the
+# main site deploy always finishes. See deploy/private-apps.sh.
+echo "🔒 Deploying private apps..."
+timeout 900 bash deploy/private-apps.sh || echo "⚠️  Private apps step failed (main site unaffected)"
+
+# ==========================================
 # HEALTH CHECKS
 # ==========================================
 echo "🔍 Waiting for services to start..."
