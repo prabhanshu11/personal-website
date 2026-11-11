@@ -27,5 +27,7 @@ jobs:
       - name: Deploy
         env:
           HABITS_GITHUB_TOKEN: ${{ secrets.HABITS_GITHUB_TOKEN }}
+          # Optional; consumed by deploy/private-apps.sh (empty = skipped). Never echoed.
+          REVIEW_TOKEN: ${{ secrets.REVIEW_TOKEN }}
         run: |
-          ssh ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/prabhanshu.space && HABITS_GITHUB_TOKEN='${{ secrets.HABITS_GITHUB_TOKEN }}' ./deploy/run.sh"
+          ssh ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/prabhanshu.space && HABITS_GITHUB_TOKEN='${{ secrets.HABITS_GITHUB_TOKEN }}' REVIEW_TOKEN='$REVIEW_TOKEN' ./deploy/run.sh"
